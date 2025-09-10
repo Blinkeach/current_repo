@@ -1,8 +1,13 @@
 import { Storage, File } from "@google-cloud/storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
+import { localStorageService } from "./localStorage";
+import path from "path";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
+
+// Check if we're running in local development mode
+const isLocalDevelopment = process.env.NODE_ENV === 'development' && !process.env.REPLIT;
 
 // The object storage client is used to interact with the object storage service.
 export const objectStorageClient = new Storage({
@@ -48,30 +53,53 @@ export class ObjectStorageService {
   }
 
   // Downloads an object to the response.
-  async downloadObject(file: File, res: Response, cacheTtlSec: number = 3600) {
+  async downloadObject(file: File | string, res: Response, cacheTtlSec: number = 3600) {
     try {
-      // Get file metadata
-      const [metadata] = await file.getMetadata();
-      
-      // Set appropriate headers
-      res.set({
-        "Content-Type": metadata.contentType || "application/octet-stream",
-        "Content-Length": metadata.size,
-        "Cache-Control": `private, max-age=${cacheTtlSec}`,
-        "Content-Disposition": `attachment; filename="${metadata.name}"`,
-      });
-
-      // Stream the file to the response
-      const stream = file.createReadStream();
-
-      stream.on("error", (err) => {
-        console.error("Stream error:", err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: "Error streaming file" });
+      // Handle local storage download
+      if (isLocalDevelopment && typeof file === 'string') {
+        const exists = await localStorageService.invoiceFileExists(file);
+        if (!exists) {
+          return res.status(404).json({ error: "File not found" });
         }
-      });
+        
+        const fileBuffer = await localStorageService.getInvoiceFileBuffer(file);
+        const fileName = path.basename(file);
+        
+        res.set({
+          "Content-Type": "application/octet-stream",
+          "Content-Length": fileBuffer.length.toString(),
+          "Cache-Control": `private, max-age=${cacheTtlSec}`,
+          "Content-Disposition": `attachment; filename="${fileName}"`,
+        });
+        
+        return res.send(fileBuffer);
+      }
+      
+      // Handle cloud storage download (when file is a File object)
+      if (typeof file !== 'string') {
+        // Get file metadata
+        const [metadata] = await file.getMetadata();
+        
+        // Set appropriate headers
+        res.set({
+          "Content-Type": metadata.contentType || "application/octet-stream",
+          "Content-Length": metadata.size,
+          "Cache-Control": `private, max-age=${cacheTtlSec}`,
+          "Content-Disposition": `attachment; filename="${metadata.name}"`,
+        });
 
-      stream.pipe(res);
+        // Stream the file to the response
+        const stream = file.createReadStream();
+
+        stream.on("error", (err) => {
+          console.error("Stream error:", err);
+          if (!res.headersSent) {
+            res.status(500).json({ error: "Error streaming file" });
+          }
+        });
+
+        stream.pipe(res);
+      }
     } catch (error) {
       console.error("Error downloading file:", error);
       if (!res.headersSent) {
@@ -82,6 +110,11 @@ export class ObjectStorageService {
 
   // Gets the upload URL for an invoice file.
   async getInvoiceUploadURL(): Promise<string> {
+    // Use local storage in development mode
+    if (isLocalDevelopment) {
+      return await localStorageService.getInvoiceUploadURL();
+    }
+
     const privateObjectDir = this.getPrivateObjectDir();
     if (!privateObjectDir) {
       throw new Error(
@@ -105,9 +138,18 @@ export class ObjectStorageService {
   }
 
   // Gets the invoice file from the object path.
-  async getInvoiceFile(objectPath: string): Promise<File> {
+  async getInvoiceFile(objectPath: string): Promise<File | string> {
     if (!objectPath.startsWith("/invoices/")) {
       throw new ObjectNotFoundError();
+    }
+
+    // Use local storage in development mode
+    if (isLocalDevelopment) {
+      const exists = await localStorageService.invoiceFileExists(objectPath);
+      if (!exists) {
+        throw new ObjectNotFoundError();
+      }
+      return objectPath; // Return path for local storage
     }
 
     const invoiceId = objectPath.slice(10); // Remove "/invoices/"
@@ -127,6 +169,11 @@ export class ObjectStorageService {
   }
 
   normalizeInvoicePath(rawPath: string): string {
+    // Use local storage normalization in development mode
+    if (isLocalDevelopment) {
+      return localStorageService.normalizeInvoicePath(rawPath);
+    }
+
     if (!rawPath.startsWith("https://storage.googleapis.com/")) {
       return rawPath;
     }
@@ -153,6 +200,16 @@ export class ObjectStorageService {
   async deleteInvoiceFile(objectPath: string): Promise<void> {
     if (!objectPath.startsWith("/invoices/")) {
       throw new ObjectNotFoundError();
+    }
+
+    // Use local storage in development mode
+    if (isLocalDevelopment) {
+      const exists = await localStorageService.invoiceFileExists(objectPath);
+      if (!exists) {
+        throw new ObjectNotFoundError();
+      }
+      await localStorageService.deleteInvoiceFile(objectPath);
+      return;
     }
 
     const invoiceId = objectPath.slice(10); // Remove "/invoices/"

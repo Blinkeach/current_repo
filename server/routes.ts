@@ -251,6 +251,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Local upload endpoint for development
+  app.post("/api/local-upload/invoice/:invoiceId", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const { invoiceId } = req.params;
+      const { localStorageService } = await import('./localStorage');
+      
+      const filePath = await localStorageService.saveInvoiceFile(
+        invoiceId, 
+        req.file.buffer, 
+        req.file.originalname
+      );
+      
+      res.json({ 
+        success: true, 
+        filePath,
+        message: "File uploaded successfully" 
+      });
+    } catch (error) {
+      console.error("Error uploading file locally:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
   app.put("/api/orders/:id/invoice", isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
