@@ -340,56 +340,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve uploaded invoice files
+  // Serve uploaded invoice files (redirect old URLs to new local storage)
   app.get("/invoices/:invoicePath(*)", async (req, res) => {
     try {
       const invoicePath = req.params.invoicePath;
-      const objectStorageService = new ObjectStorageService();
       
-      // Get the invoice file from object storage
-      const invoiceFile = await objectStorageService.getInvoiceFile(`/invoices/${invoicePath}`);
-      
-      if (!invoiceFile) {
-        return res.status(404).json({ error: "Invoice not found" });
-      }
-      
-      // Stream the file to the response
-      objectStorageService.downloadObject(invoiceFile, res);
+      // For local development, redirect old invoice URLs to local-upload route
+      return res.redirect(`/api/local-upload/invoice/${invoicePath}`);
     } catch (error) {
       console.error("Error serving invoice:", error);
       return res.status(500).json({ error: "Failed to serve invoice" });
     }
   });
 
-  app.get("/api/invoices/download/*", isAdmin, async (req, res) => {
-    try {
-      // Extract the full path after /api/invoices/download/
-      const invoicePath = req.path.replace("/api/invoices/download", "");
-      
-      // For local development, proxy to the local-upload route
-      if (invoicePath.startsWith("/api/local-upload/")) {
-        const localPath = invoicePath.replace("/api/local-upload/", "");
-        return res.redirect(`/api/local-upload/${localPath}`);
-      }
-      
-      // For local files that start with /invoices/
-      if (invoicePath.startsWith("/invoices/")) {
-        const objectStorageService = new ObjectStorageService();
-        const invoiceFile = await objectStorageService.getInvoiceFile(invoicePath);
-        await objectStorageService.downloadObject(invoiceFile, res);
-        return;
-      }
-      
-      // If it doesn't match any pattern, return 404
-      return res.status(404).json({ error: "Invoice not found" });
-    } catch (error) {
-      console.error("Error downloading invoice:", error);
-      if (error instanceof ObjectNotFoundError) {
-        return res.status(404).json({ error: "Invoice not found" });
-      }
-      res.status(500).json({ error: "Failed to download invoice" });
-    }
-  });
+  // Admin invoice download route (removed - no longer needed)
   
   // Payment routes
   // For testing purposes, we're temporarily removing authentication check
