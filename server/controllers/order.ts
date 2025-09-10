@@ -148,7 +148,7 @@ const orderController = {
       const user = await storage.getUser(order.userId);
       
       // Auto-register delivery after successful order creation
-      let trackingInfo = null;
+      let trackingInfo: { trackingId: string; trackingUrl: string } | undefined = undefined;
       if (user) {
         try {
           console.log(`🚀 Auto-registering delivery for new order #${order.id}`);
@@ -286,7 +286,7 @@ const orderController = {
       const user = await storage.getUser(updatedOrder.userId);
       
       // Handle tracking information for shipping
-      let trackingInfo = null;
+      let trackingInfo: { trackingId: string; trackingUrl: string } | undefined = undefined;
       
       if (status === 'processing') {
         // When order is being processed, automatically create delivery booking
