@@ -278,6 +278,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PUT endpoint for direct file uploads (LocalFileUploader)
+  app.put("/api/local-upload/invoice/:invoiceId", async (req, res) => {
+    try {
+      const { invoiceId } = req.params;
+      const { localStorageService } = await import('./localStorage');
+      const fs = await import('fs').then(m => m.promises);
+      
+      // Read the raw body data
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
+      });
+      
+      req.on('end', async () => {
+        try {
+          const fileBuffer = Buffer.concat(chunks);
+          
+          if (fileBuffer.length === 0) {
+            return res.status(400).json({ error: "No file data received" });
+          }
+
+          // Save to local storage with a generic filename
+          const filePath = await localStorageService.saveInvoiceFile(
+            invoiceId, 
+            fileBuffer, 
+            'invoice.pdf'
+          );
+          
+          res.json({ 
+            success: true, 
+            filePath,
+            message: "File uploaded successfully" 
+          });
+        } catch (saveError) {
+          console.error('Error saving file:', saveError);
+          res.status(500).json({ error: "Failed to save file" });
+        }
+      });
+      
+      req.on('error', (error) => {
+        console.error('Error receiving file data:', error);
+        res.status(500).json({ error: "Failed to receive file data" });
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // GET endpoint for downloading files
+  app.get("/api/local-upload/invoice/:invoiceId", async (req, res) => {
+    try {
+      const { invoiceId } = req.params;
+      const fs = await import('fs').then(m => m.promises);
+      const path = await import('path');
+      
+      // Try to find the file with the invoice ID pattern
+      const invoicesDir = path.join(process.cwd(), 'public', 'uploads', 'invoices');
+      const files = await fs.readdir(invoicesDir);
+      const matchingFile = files.find(file => file.startsWith(invoiceId));
+      
+      if (!matchingFile) {
+        return res.status(404).json({ error: "Invoice file not found" });
+      }
+      
+      const filePath = path.join(invoicesDir, matchingFile);
+      const fileBuffer = await fs.readFile(filePath);
+      
+      // Set proper headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoiceId}.pdf"`);
+      res.setHeader('Content-Length', fileBuffer.length);
+      
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
   app.put("/api/orders/:id/invoice", isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
