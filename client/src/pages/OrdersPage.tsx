@@ -24,7 +24,6 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/hooks/use-auth';
-import { generateEnhancedInvoice } from '@/lib/enhanced-invoice';
 import { apiRequest } from '@/lib/queryClient';
 
 // Interfaces for order data
@@ -180,9 +179,11 @@ const OrdersPage: React.FC = () => {
           ? `${window.location.origin}${order.invoiceUrl}`
           : order.invoiceUrl;
           
-        const response = await fetch(invoiceUrl);
+        const response = await fetch(invoiceUrl, {
+          credentials: 'include'
+        });
         if (!response.ok) {
-          throw new Error('Failed to download invoice');
+          throw new Error(`Failed to download invoice: ${response.status}`);
         }
         
         const blob = await response.blob();
@@ -203,33 +204,11 @@ const OrdersPage: React.FC = () => {
       } catch (downloadError) {
         console.error('Error downloading admin invoice:', downloadError);
         
-        // Fallback to generating invoice if download fails
-        console.log('Falling back to generated invoice for order:', JSON.stringify(order, null, 2));
-        
-        // Ensure order data is complete for generation
-        if (!order || !order.id) {
-          throw new Error('Invalid order data');
-        }
-        
-        // Check if items array exists and has content
-        if (!order.items || !Array.isArray(order.items) || order.items.length === 0) {
-          console.error('Order items missing or empty:', order);
-          toast({
-            title: "Error",
-            description: "Could not generate invoice: Order items data is missing",
-            variant: "destructive",
-            duration: 5000
-          });
-          return;
-        }
-        
-        // Generate the enhanced PDF invoice as fallback
-        await generateEnhancedInvoice(order);
-        
         toast({
-          title: "Invoice Downloaded",
-          description: `Professional invoice for order #${order.id} has been downloaded successfully.`,
-          duration: 3000
+          title: "Download Failed", 
+          description: "Unable to download invoice. Please contact support for assistance.",
+          variant: "destructive",
+          duration: 5000
         });
       }
     } catch (error: any) {
