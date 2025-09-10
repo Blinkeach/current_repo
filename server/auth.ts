@@ -134,7 +134,9 @@ export function setupAuth(app: Express) {
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: '/api/auth/google/callback',
+          callbackURL: process.env.NODE_ENV === 'production' 
+            ? 'https://blinkeach.in/api/auth/google/callback'
+            : '/api/auth/google/callback',
           scope: ['profile', 'email'],
         },
         async (accessToken, refreshToken, profile, done) => {
@@ -191,7 +193,9 @@ export function setupAuth(app: Express) {
         {
           clientID: process.env.FACEBOOK_APP_ID,
           clientSecret: process.env.FACEBOOK_APP_SECRET,
-          callbackURL: '/api/auth/facebook/callback',
+          callbackURL: process.env.NODE_ENV === 'production' 
+            ? 'https://blinkeach.in/api/auth/facebook/callback'  
+            : '/api/auth/facebook/callback',
           profileFields: ['id', 'displayName', 'email', 'photos'],
         },
         async (accessToken, refreshToken, profile, done) => {

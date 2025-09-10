@@ -1,8 +1,51 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// CORS configuration for production domains
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Production domains
+    const allowedOrigins = [
+      'https://blinkeach.in',
+      'https://www.blinkeach.in', 
+      'https://blinkeach.com',
+      'https://www.blinkeach.com'
+    ];
+    
+    // Development origins
+    if (process.env.NODE_ENV === 'development') {
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+      
+      if (origin.includes('.replit.') || origin.includes('replit.dev')) {
+        return callback(null, true);
+      }
+    }
+    
+    // Check allowed origins for production
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Additional origins from environment variable
+    const envOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+    if (envOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

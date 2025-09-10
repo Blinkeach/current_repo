@@ -3,9 +3,9 @@ import { storage } from "../storage";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 
-// Using your live Razorpay credentials from environment variables
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "rzp_test_rcVl0DWaf7NRr9";
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "b4wOG3UwVOOIpxmQHu5C3Nni";
+// Use environment variables for production, fallback to test keys for development only
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || (process.env.NODE_ENV === 'development' ? "rzp_test_rcVl0DWaf7NRr9" : "");
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || (process.env.NODE_ENV === 'development' ? "b4wOG3UwVOOIpxmQHu5C3Nni" : "");
 
 // Initialize Razorpay instance
 const razorpayInstance = new Razorpay({

@@ -1,16 +1,21 @@
 services:
   - type: web
-    name: blinkeach-ecommerce
+    name: blinkeach-production
     env: node
     plan: starter
     buildCommand: npm ci && npm run build
     startCommand: npm start
+    domains:
+      - blinkeach.in
+      - www.blinkeach.in
+      - blinkeach.com
+      - www.blinkeach.com
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
         fromDatabase:
-          name: blinkeach-db
+          name: blinkeach-production-db
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -36,9 +41,15 @@ services:
         sync: false
       - key: FACEBOOK_APP_SECRET
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DOMAIN_URL
+        value: https://blinkeach.in
+      - key: ALLOWED_ORIGINS
+        value: https://blinkeach.in,https://www.blinkeach.in,https://blinkeach.com,https://www.blinkeach.com
 
 databases:
-  - name: blinkeach-db
-    databaseName: blinkeach
-    user: blinkeach_user
+  - name: blinkeach-production-db
+    databaseName: blinkeach_prod
+    user: blinkeach_prod_user
     plan: starter
