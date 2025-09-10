@@ -97,7 +97,7 @@ export class DeliveryService {
     
     // Check if the API key is set
     if (!this.config.apiKey) {
-      console.warn(`${this.config.serviceName} API key is not set. Delivery service will not work.`);
+      console.warn(`${this.config.serviceName} API key is not set. Using mock delivery service for development.`);
     }
   }
   
