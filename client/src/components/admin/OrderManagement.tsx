@@ -45,8 +45,7 @@ import {
   FileImage,
   Trash2
 } from 'lucide-react';
-import { ObjectUploader } from '@/components/ObjectUploader';
-import type { UploadResult } from '@uppy/core';
+import { LocalFileUploader } from '@/components/LocalFileUploader';
 
 interface OrderItem {
   id: number;
@@ -403,30 +402,18 @@ const OrderManagement: React.FC = () => {
                             </Button>
                           </div>
                         ) : (
-                          <ObjectUploader
-                            maxNumberOfFiles={1}
-                            maxFileSize={10485760} // 10MB
+                          <LocalFileUploader
                             acceptedFileTypes={['.png', '.jpg', '.jpeg', '.pdf']}
-                            onGetUploadParameters={async () => {
-                              const response = await apiRequest('POST', '/api/invoices/upload');
-                              const data = await response.json();
-                              return {
-                                method: 'PUT' as const,
-                                url: data.uploadURL,
-                              };
-                            }}
-                            onComplete={(result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-                              if (result.successful && result.successful.length > 0) {
-                                const uploadedFile = result.successful[0];
-                                const invoiceUrl = uploadedFile.uploadURL;
-                                updateInvoiceMutation.mutate({ id: order.id, invoiceUrl });
-                              }
+                            maxFileSize={10485760} // 10MB
+                            onUploadComplete={(invoiceUrl: string) => {
+                              updateInvoiceMutation.mutate({ id: order.id, invoiceUrl });
                             }}
                             buttonClassName="h-8 text-xs"
+                            buttonText="Upload Invoice"
                           >
                             <Upload className="h-4 w-4 mr-2" />
                             Upload Invoice
-                          </ObjectUploader>
+                          </LocalFileUploader>
                         )}
                       </div>
                     </TableCell>
