@@ -382,7 +382,7 @@ const OrderManagement: React.FC = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => window.open(`/api/invoices/download${order.invoiceUrl}`, '_blank')}
+                              onClick={() => window.open(order.invoiceUrl, '_blank')}
                             >
                               <FileImage className="h-4 w-4 mr-2" /> 
                               View Invoice

@@ -361,13 +361,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/invoices/download/invoices/:invoiceId(*)", isAdmin, async (req, res) => {
+  app.get("/api/invoices/download/*", isAdmin, async (req, res) => {
     try {
-      const invoicePath = `/invoices/${req.params.invoiceId}`;
-      const objectStorageService = new ObjectStorageService();
-      const invoiceFile = await objectStorageService.getInvoiceFile(invoicePath);
+      // Extract the full path after /api/invoices/download/
+      const invoicePath = req.path.replace("/api/invoices/download", "");
       
-      await objectStorageService.downloadObject(invoiceFile, res);
+      // For local development, proxy to the local-upload route
+      if (invoicePath.startsWith("/api/local-upload/")) {
+        const localPath = invoicePath.replace("/api/local-upload/", "");
+        return res.redirect(`/api/local-upload/${localPath}`);
+      }
+      
+      // For local files that start with /invoices/
+      if (invoicePath.startsWith("/invoices/")) {
+        const objectStorageService = new ObjectStorageService();
+        const invoiceFile = await objectStorageService.getInvoiceFile(invoicePath);
+        await objectStorageService.downloadObject(invoiceFile, res);
+        return;
+      }
+      
+      // If it doesn't match any pattern, return 404
+      return res.status(404).json({ error: "Invoice not found" });
     } catch (error) {
       console.error("Error downloading invoice:", error);
       if (error instanceof ObjectNotFoundError) {
