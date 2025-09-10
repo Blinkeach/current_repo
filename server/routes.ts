@@ -283,7 +283,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { invoiceId } = req.params;
       const { localStorageService } = await import('./localStorage');
-      const fs = await import('fs').then(m => m.promises);
       
       // Read the raw body data
       const chunks: Buffer[] = [];
