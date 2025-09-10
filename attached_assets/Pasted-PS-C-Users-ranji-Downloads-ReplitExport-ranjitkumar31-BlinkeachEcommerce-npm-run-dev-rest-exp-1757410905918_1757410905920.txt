@@ -1,0 +1,224 @@
+PS C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce> npm run dev
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx server/index.ts
+
+[dotenv@17.2.2] injecting env (66) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+[dotenv@17.2.2] injecting env (0) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+Server running at http://localhost:5000
+Gmail server is ready to send messages
+3:03:48 PM [express] GET /api/auth/user 304 in 421ms :: {"id":1,"username":"admin","email":"admin@bl…
+3:03:48 PM [express] GET /api/auth/user 304 in 384ms :: {"id":1,"username":"admin","email":"admin@bl…
+3:03:48 PM [express] GET /api/cart 304 in 548ms :: []
+3:03:51 PM [express] GET /api/recommendations 304 in 651ms :: []
+3:03:51 PM [express] GET /api/products/deals 304 in 743ms :: []
+3:03:51 PM [express] GET /api/carousel-images 304 in 757ms :: [{"id":1,"title":"good","description":…
+3:03:51 PM [express] GET /api/products 304 in 764ms :: []
+3:03:51 PM [express] GET /api/navbar-settings 304 in 791ms :: {"logoImage":"/src/assets/blinkeach-lo…
+3:03:51 PM [express] GET /api/products/top-selling 304 in 460ms :: []
+3:03:51 PM [express] GET /api/carousel-images 304 in 492ms :: []
+3:03:51 PM [express] GET /api/recommendations 304 in 439ms :: []
+3:03:52 PM [express] GET /api/products/details 304 in 1308ms :: []
+3:03:59 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:00 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:00 PM [chat] admin disconnected: AdminNotifications
+3:04:01 PM [express] GET /api/admin/dashboard/top-products 304 in 1423ms :: []
+3:04:02 PM [express] GET /api/contact/messages 200 in 1549ms :: []
+3:04:02 PM [express] GET /api/support/requests 200 in 1610ms :: [{"id":1,"type":"callback","name":"S…
+3:04:02 PM [express] GET /api/admin/dashboard/stats 304 in 2526ms :: {"revenue":{"total":13808487,"g…
+3:04:02 PM [express] GET /api/admin/dashboard/recent-orders 304 in 2501ms :: [{"id":17,"customerName…
+3:04:05 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:08 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:08 PM [chat] admin disconnected: AdminNotifications
+3:04:12 PM [chat] admin disconnected: AdminNotifications
+3:04:12 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:13 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:15 PM [chat] admin disconnected: AdminNotifications
+3:04:15 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:16 PM [express] GET /api/orders 304 in 1707ms :: [{"id":4,"userId":2,"status":"shipped","totalA…
+3:04:17 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:20 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:49 PM [chat] admin disconnected: AdminNotifications
+3:04:49 PM [chat] New admin connection: AdminNotifications (notification)
+3:04:54 PM [chat] New admin connection: AdminNotifications (notification)
+3:05:50 PM [express] GET /api/contact/messages 304 in 1436ms :: []
+3:05:50 PM [express] GET /api/support/requests 304 in 1479ms :: [{"id":1,"type":"callback","name":"S…
+3:06:14 PM [express] POST /api/uploads/images 201 in 503ms :: {"message":"File uploaded successfully…
+3:06:15 PM [express] POST /api/products 201 in 810ms :: {"id":29,"name":"Test ","description":" Y6UR…
+3:06:16 PM [express] GET /api/products 200 in 639ms :: [{"id":29,"name":"Test ","description":" Y6UR…
+3:06:20 PM [chat] admin disconnected: AdminNotifications
+3:06:21 PM [express] GET /api/wishlist 304 in 549ms :: []
+3:06:26 PM [chat] New admin connection: AdminNotifications (notification)
+3:06:39 PM [chat] New admin connection: AdminNotifications (notification)
+3:06:41 PM [chat] New admin connection: AdminNotifications (notification)
+3:06:41 PM [chat] admin disconnected: AdminNotifications
+3:06:42 PM [chat] New admin connection: AdminNotifications (notification)
+3:06:42 PM [chat] admin disconnected: AdminNotifications
+3:06:43 PM [express] GET /api/admin/dashboard/top-products 200 in 3922ms :: [{"id":29,"name":"Test "…
+3:06:43 PM [express] GET /api/admin/dashboard/stats 200 in 4279ms :: {"revenue":{"total":13808487,"g…
+3:06:43 PM [express] GET /api/admin/dashboard/recent-orders 304 in 4381ms :: [{"id":17,"customerName…
+3:06:46 PM [chat] New admin connection: AdminNotifications (notification)
+3:06:46 PM [express] GET /api/products/29 200 in 742ms :: {"id":29,"name":"Test ","description":" Y6…
+3:06:47 PM [chat] New admin connection: AdminNotifications (notification)
+3:07:13 PM [express] PUT /api/products/29 200 in 516ms :: {"id":29,"name":"Test ","description":" Y6…
+3:07:13 PM [express] GET /api/products 200 in 450ms :: [{"id":29,"name":"Test ","description":" Y6UR…
+3:07:23 PM [chat] admin disconnected: AdminNotifications
+3:07:28 PM [chat] New admin connection: AdminNotifications (notification)
+3:07:30 PM [express] GET /api/products/29 200 in 1201ms :: {"id":29,"name":"Test ","description":" Y…
+3:07:30 PM [express] GET /api/recommendations 200 in 478ms :: [{"id":29,"name":"Test ","price":59900…
+3:07:31 PM [express] GET /api/products/29/related 200 in 2565ms :: []
+3:07:40 PM [express] GET /api/user/addresses 200 in 3467ms :: [{"id":1,"userId":1,"addressName":"Hom…
+processCodOrder called with request: {
+  "userId": 1,
+  "totalAmount": 59900,
+  "shippingAddress": "Administrator, 09523243060, Khajraitha, Kahalgaon, Bihar - 851216",
+  "specialInstructions": "",
+  "items": [
+    {
+      "productId": 29,
+      "name": "Test ",
+      "price": 59900,
+      "quantity": 1,
+      "selectedColor": "Red",
+      "selectedSize": "L"
+    }
+  ]
+}
+Creating order with data: {
+  userId: 1,
+  totalAmount: 60900,
+  shippingAddress: 'Administrator, 09523243060, Khajraitha, Kahalgaon, Bihar - 851216',
+  paymentMethod: 'cod',
+  specialInstructions: '',
+  userName: 'Administrator',
+  userEmail: 'admin@blinkeach.com',
+  userPhone: ''
+}
+Order created: {
+  id: 18,
+  userId: 1,
+  status: 'pending',
+  totalAmount: 60900,
+  shippingAddress: 'Administrator, 09523243060, Khajraitha, Kahalgaon, Bihar - 851216',
+  paymentMethod: 'cod',
+  paymentId: null,
+  razorpayOrderId: null,
+  razorpayPaymentId: null,
+  razorpaySignature: null,
+  specialInstructions: '',
+  userName: 'Administrator',
+  userEmail: 'admin@blinkeach.com',
+  userPhone: '',
+  invoiceUrl: null,
+  trackingId: null,
+  trackingUrl: null,
+  createdAt: 2025-09-09T09:38:01.986Z,
+  updatedAt: 2025-09-09T09:38:01.986Z
+}
+Adding order item: {
+  productId: 29,
+  name: 'Test ',
+  price: 59900,
+  quantity: 1,
+  selectedColor: 'Red',
+  selectedSize: 'L'
+}
+Stock updated for product 29, new stock: 455
+Order confirmed with ID: 18
+3:08:02 PM [express] POST /api/payment/process-cod 200 in 1763ms :: {"success":true,"message":"Cash …
+3:08:04 PM [express] DELETE /api/cart 200 in 1262ms :: {"success":true,"message":"Cart cleared succe…
+3:08:08 PM [chat] New admin connection: AdminNotifications (notification)
+3:08:08 PM [chat] admin disconnected: AdminNotifications
+3:08:08 PM [chat] New admin connection: AdminNotifications (notification)
+3:08:10 PM [express] GET /api/admin/dashboard/stats 200 in 2064ms :: {"revenue":{"total":13869387,"g…
+3:08:10 PM [express] GET /api/admin/dashboard/top-products 200 in 2060ms :: [{"id":29,"name":"Test "…
+3:08:11 PM [express] GET /api/admin/dashboard/recent-orders 200 in 2775ms :: [{"id":18,"customerName…
+3:08:12 PM [chat] New admin connection: AdminNotifications (notification)
+3:08:12 PM [chat] admin disconnected: AdminNotifications
+3:08:13 PM [chat] New admin connection: AdminNotifications (notification)
+3:08:17 PM [chat] New admin connection: AdminNotifications (notification)
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:20 PM [chat] admin disconnected: AdminNotifications
+3:08:30 PM [express] GET /api/auth/user 304 in 411ms :: {"id":1,"username":"admin","email":"admin@bl…
+3:08:30 PM [express] GET /api/auth/user 304 in 372ms :: {"id":1,"username":"admin","email":"admin@bl…
+3:08:30 PM [express] GET /api/cart 200 in 520ms :: []
+3:08:32 PM [chat] New admin connection: AdminNotifications (notification)
+3:08:32 PM [express] GET /api/navbar-settings 304 in 632ms :: {"logoImage":"/src/assets/blinkeach-lo…
+3:08:33 PM [express] GET /api/contact/messages 304 in 875ms :: []
+3:08:33 PM [express] GET /api/support/requests 304 in 892ms :: [{"id":1,"type":"callback","name":"Sh…
+3:08:33 PM [express] GET /api/orders 200 in 1530ms :: [{"id":4,"userId":2,"status":"shipped","totalA…
+Error getting invoice upload URL: Error: PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' tool and set PRIVATE_OBJECT_DIR env var.
+    at ObjectStorageService.getPrivateObjectDir (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\objectStorage.ts:42:13)
+    at ObjectStorageService.getInvoiceUploadURL (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\objectStorage.ts:85:35)
+    at <anonymous> (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\routes.ts:246:52)
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:149:13)
+    at isAdmin (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\auth.ts:322:14)   
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:280:10)
+    at strategy.pass (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\middleware\authenticate.js:355:9)
+    at C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\strategies\session.js:120:12
+    at pass (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\authenticator.js:352:31)
+    at deserialized (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\authenticator.js:364:7)
+    at <anonymous> (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\auth.ts:251:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+3:09:08 PM [express] POST /api/invoices/upload 500 in 1060ms :: {"error":"Failed to get upload URL"}
+Error getting invoice upload URL: Error: PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' tool and set PRIVATE_OBJECT_DIR env var.
+    at ObjectStorageService.getPrivateObjectDir (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\objectStorage.ts:42:13)
+    at ObjectStorageService.getInvoiceUploadURL (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\objectStorage.ts:85:35)
+    at <anonymous> (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\routes.ts:246:52)
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:149:13)
+    at isAdmin (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\auth.ts:322:14)   
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:280:10)
+    at strategy.pass (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\middleware\authenticate.js:355:9)
+    at C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\strategies\session.js:120:12
+    at pass (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\authenticator.js:352:31)
+    at deserialized (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\authenticator.js:364:7)
+    at <anonymous> (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\auth.ts:251:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+3:09:12 PM [express] POST /api/invoices/upload 500 in 1661ms :: {"error":"Failed to get upload URL"}
+Error getting invoice upload URL: Error: PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' tool and set PRIVATE_OBJECT_DIR env var.
+    at ObjectStorageService.getPrivateObjectDir (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\objectStorage.ts:42:13)
+    at ObjectStorageService.getInvoiceUploadURL (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\objectStorage.ts:85:35)
+    at <anonymous> (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\routes.ts:246:52)
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:149:13)
+    at isAdmin (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\auth.ts:322:14)   
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\express\lib\router\index.js:280:10)
+    at strategy.pass (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\middleware\authenticate.js:355:9)
+    at C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\strategies\session.js:120:12
+    at pass (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\authenticator.js:352:31)
+    at deserialized (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\node_modules\passport\lib\authenticator.js:364:7)
+    at <anonymous> (C:\Users\ranji\Downloads\ReplitExport-ranjitkumar31\BlinkeachEcommerce\server\auth.ts:251:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+3:09:29 PM [express] POST /api/invoices/upload 500 in 344ms :: {"error":"Failed to get upload URL"}
+3:09:33 PM [express] GET /api/contact/messages 304 in 485ms :: []
+3:09:34 PM [express] GET /api/support/requests 304 in 1289ms :: [{"id":1,"type":"callback","name":"S…

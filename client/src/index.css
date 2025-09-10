@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+/* Custom Uppy Upload Area Styling */
+.uppy-Dashboard-dropFilesHere {
+  font-size: 14px !important;
+  padding: 30px 20px !important;
+}
+
+.uppy-Dashboard-inner {
+  min-height: 250px !important;
+  background-color: #fafafa !important;
+  border: 2px dashed #d1d5db !important;
+  border-radius: 8px !important;
+}
+
+.uppy-Dashboard-dropFilesIcon {
+  width: 48px !important;
+  height: 48px !important;
+  opacity: 0.6 !important;
+}
+
+.uppy-Dashboard-dropFilesTitle {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  margin-top: 15px !important;
+  color: #6b7280 !important;
+}
+
+.uppy-Dashboard-note {
+  font-size: 12px !important;
+  color: #9ca3af !important;
+  margin-top: 10px !important;
+}
+
+/* Add file icon before the drop text */
+.uppy-Dashboard-dropFilesHere::before {
+  content: "";
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 10px auto;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14,2 14,8 20,8'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.7;
+}
+
+/* Make the modal more compact */
+.uppy-Dashboard--modal {
+  max-width: 500px !important;
+  max-height: 400px !important;
+}
+
+/* Style the browse files link */
+.uppy-Dashboard-browse {
+  color: #3b82f6 !important;
+  text-decoration: underline !important;
+  font-weight: 500 !important;
+}
+
+.uppy-Dashboard-browse:hover {
+  color: #1d4ed8 !important;
+}
+
+/* Center align the drop area content */
+.uppy-Dashboard-AddFiles {
+  text-align: center !important;
+}
