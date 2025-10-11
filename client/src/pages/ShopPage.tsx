@@ -121,21 +121,21 @@ const ShopPage: React.FC = () => {
         <meta name="description" content={`Browse and shop for ${filters.category || 'all products'} on Blinkeach. Great deals, fast delivery, easy returns.`} />
       </Helmet>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col mb-6">
-          <h1 className="text-2xl font-bold text-neutral-800 mb-2">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+        <div className="flex flex-col mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-neutral-800 mb-2">
             {filters.category 
               ? `${filters.category.charAt(0).toUpperCase() + filters.category.slice(1)}`
               : filters.search
               ? `Search results for "${filters.search}"`
               : 'All Products'}
           </h1>
-          <p className="text-neutral-600">
+          <p className="text-sm sm:text-base text-neutral-600">
             Discover our wide range of {filters.category || 'products'} at unbeatable prices.
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
           {/* Filters for desktop */}
           <div className="hidden md:block w-64 flex-shrink-0">
             <ProductFilters 

@@ -63,9 +63,9 @@ const MarqueeCarousel: React.FC<MarqueeCarouselProps> = ({
     {
       loop: true,
       align: "start",
-      dragFree: false, // Disable drag for smooth continuous scrolling
+      dragFree: true, // Enable drag for better user control
       containScroll: "trimSnaps",
-      direction: direction === "left" ? "ltr" : "rtl",
+      slidesToScroll: 1,
     },
     [Autoplay(autoplayOptions)],
   );
@@ -103,36 +103,35 @@ const MarqueeCarousel: React.FC<MarqueeCarouselProps> = ({
       </div>
 
       <div
-        className={`overflow-hidden product-carousel-container rounded-lg bg-white shadow-sm p-4 marquee-${direction}`}
+        className="overflow-hidden product-carousel-container rounded-lg bg-white shadow-sm p-2 sm:p-4"
         ref={emblaRef}
         style={{ borderTop: `3px solid ${accentColor}` }}
       >
         {isLoading ? (
-          <div className="flex space-x-4 px-4">
+          <div className="flex space-x-2 sm:space-x-4">
             {[1, 2, 3, 4, 5].map((item) => (
               <div
                 key={item}
-                className="flex-[0_0_85%] min-w-0 sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] xl:flex-[0_0_20%]"
+                className="flex-[0_0_90%] min-w-0 xs:flex-[0_0_70%] sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] xl:flex-[0_0_20%]"
               >
-                <div className="bg-white rounded-md shadow-sm p-3 h-full">
-                  <Skeleton className="w-full h-40 mb-3" />
-                  <Skeleton className="w-3/4 h-4 mb-2" />
-                  <Skeleton className="w-1/2 h-4 mb-2" />
-                  <Skeleton className="w-1/3 h-4 mb-4" />
-                  <Skeleton className="w-full h-8" />
+                <div className="bg-white rounded-md shadow-sm p-2 sm:p-3 h-full">
+                  <Skeleton className="w-full h-32 sm:h-40 mb-2 sm:mb-3" />
+                  <Skeleton className="w-3/4 h-3 sm:h-4 mb-1 sm:mb-2" />
+                  <Skeleton className="w-1/2 h-3 sm:h-4 mb-1 sm:mb-2" />
+                  <Skeleton className="w-1/3 h-3 sm:h-4 mb-2 sm:mb-4" />
+                  <Skeleton className="w-full h-7 sm:h-8" />
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="flex marquee-track">
-            {/* Double the products to create seamless continuous effect */}
-            {[...products, ...products].map((product: Product, i) => (
+          <div className="flex">
+            {products.map((product: Product) => (
               <div
-                key={`${product.id}-${i}`}
-                className="flex-[0_0_85%] min-w-0 pl-4 sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] xl:flex-[0_0_20%] marquee-item transition-transform duration-300 hover:scale-[0.98]"
+                key={product.id}
+                className="flex-[0_0_90%] min-w-0 xs:flex-[0_0_70%] sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] xl:flex-[0_0_20%] pl-2 sm:pl-4"
               >
-                <div className="mx-1">
+                <div className="mx-0.5 sm:mx-1">
                   <ProductCard
                     id={product.id}
                     name={product.name}
@@ -208,45 +207,13 @@ const ProductCarousel: React.FC = () => {
             border-color: #f0f0f0;
           }
           
-          .product-carousel-container:hover .marquee-track {
-            animation-play-state: paused;
-          }
-          
-          .marquee-track {
-            display: flex;
-            transition: all 0.5s ease;
-          }
-          
-          .marquee-item {
-            flex-shrink: 0;
-          }
-          
-          /* Marquee animation styling */
-          .marquee-left .marquee-track {
-            animation: marqueeLeft 60s linear infinite;
-          }
-          
-          .marquee-right .marquee-track {
-            animation: marqueeRight 60s linear infinite;
-          }
-          
-          @keyframes marqueeLeft {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-          }
-          
-          @keyframes marqueeRight {
-            from { transform: translateX(-50%); }
-            to { transform: translateX(0); }
-          }
-          
           /* Add a subtle gradient mask at the edges for better visual effect */
           .product-carousel-container::before,
           .product-carousel-container::after {
             content: '';
             position: absolute;
             top: 0;
-            width: 50px;
+            width: 30px;
             height: 100%;
             z-index: 2;
             pointer-events: none;
@@ -260,6 +227,13 @@ const ProductCarousel: React.FC = () => {
           .product-carousel-container::after {
             right: 0;
             background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
+          }
+          
+          @media (max-width: 640px) {
+            .product-carousel-container::before,
+            .product-carousel-container::after {
+              width: 15px;
+            }
           }
         `}
       </style>

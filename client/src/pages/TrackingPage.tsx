@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Truck, Package, MapPin, Clock, CheckCircle, ExternalLink } from "lucide-react";
+import { Truck, Package, MapPin, Clock, CheckCircle, ExternalLink, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link, useLocation } from "wouter";
 
 interface TrackingUpdate {
   timestamp: Date;
@@ -36,18 +37,44 @@ const statusConfig = {
 
 export default function TrackingPage() {
   const { t } = useTranslation();
+  const [location] = useLocation();
   const [trackingId, setTrackingId] = useState("");
   const [submittedTrackingId, setSubmittedTrackingId] = useState("");
+  
+  // Get tracking ID from URL params
+  useEffect(() => {
+    console.log('🔍 TrackingPage: Component mounted, location:', location);
+    const params = new URLSearchParams(window.location.search);
+    const idFromUrl = params.get('id');
+    console.log('📋 TrackingPage: Tracking ID from URL:', idFromUrl);
+    
+    if (idFromUrl) {
+      setTrackingId(idFromUrl);
+      setSubmittedTrackingId(idFromUrl);
+      console.log('✅ TrackingPage: Auto-submitting tracking ID:', idFromUrl);
+    }
+  }, [location]);
 
   const { data: trackingInfo, isLoading, error } = useQuery<TrackingInfo>({
     queryKey: ['/api/delivery/track', submittedTrackingId],
     enabled: !!submittedTrackingId,
+    onSuccess: (data) => {
+      console.log('✅ TrackingPage: Tracking data received:', data);
+    },
+    onError: (err) => {
+      console.error('❌ TrackingPage: Error fetching tracking data:', err);
+    }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔍 TrackingPage: Form submitted with tracking ID:', trackingId);
+    
     if (trackingId.trim()) {
+      console.log('🚀 TrackingPage: Submitting tracking ID:', trackingId.trim());
       setSubmittedTrackingId(trackingId.trim());
+    } else {
+      console.warn('⚠️ TrackingPage: Empty tracking ID submitted');
     }
   };
 
@@ -62,6 +89,15 @@ export default function TrackingPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/track-order" className="flex items-center gap-1">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Track Order
+            </Link>
+          </Button>
+        </div>
+        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Track Your Order</h1>
           <p className="text-muted-foreground">

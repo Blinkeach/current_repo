@@ -68,9 +68,16 @@ const HeroSlider: React.FC = () => {
   const [isPaused, setIsPaused] = useState(false);
 
   // Fetch carousel images from database (unified with admin panel)
-  const { data: carouselImages, isLoading } = useQuery({
+  const { data: carouselImages, isLoading, error } = useQuery({
     queryKey: ["/api/carousel-images"],
   });
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🎠 Carousel Images Data:', carouselImages);
+    console.log('🎠 Is Loading:', isLoading);
+    console.log('🎠 Error:', error);
+  }, [carouselImages, isLoading, error]);
 
   // Use database slides if available, otherwise fallback to hardcoded slides
   const slides = carouselImages && carouselImages.length > 0 ? carouselImages : fallbackSlides;
@@ -100,11 +107,11 @@ const HeroSlider: React.FC = () => {
 
   return (
     <section
-      className="relative"
+      className="relative w-full overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="overflow-hidden h-64 md:h-80 lg:h-96">
+      <div className="overflow-hidden h-48 xs:h-56 sm:h-64 md:h-80 lg:h-96 w-full">
         <div
           className="flex transition-transform duration-700 ease-in-out h-full"
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -120,16 +127,16 @@ const HeroSlider: React.FC = () => {
                 className="w-full h-full object-cover"
                 loading={slide.id === 1 ? "eager" : "lazy"}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent flex items-center">
-                <div className="text-white p-6 md:p-12 max-w-xl">
-                  <h2 className="text-2xl md:text-4xl font-bold mb-2">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent flex items-center">
+                <div className="text-white p-4 sm:p-6 md:p-12 max-w-xl z-10">
+                  <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-2 drop-shadow-lg">
                     {slide.title}
                   </h2>
-                  <p className="text-sm md:text-base mb-4">
+                  <p className="text-xs sm:text-sm md:text-base mb-4 drop-shadow-md">
                     {slide.description}
                   </p>
                   <Link href={slide.buttonLink}>
-                    <Button className="bg-accent hover:bg-accent-dark text-white py-2 px-6 rounded-md font-medium transition-colors">
+                    <Button className="bg-accent hover:bg-accent/90 text-white py-2 px-4 sm:px-6 rounded-md font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105">
                       {slide.buttonText}
                     </Button>
                   </Link>
@@ -140,29 +147,31 @@ const HeroSlider: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation arrows */}
+      {/* Navigation arrows - Visible on all devices */}
       <button
         onClick={prevSlide}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-colors md:flex hidden"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 sm:p-2 transition-all z-20 shadow-lg hover:scale-110"
         aria-label="Previous slide"
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-colors md:flex hidden"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 sm:p-2 transition-all z-20 shadow-lg hover:scale-110"
         aria-label="Next slide"
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
 
       {/* Slider Nav dots */}
-      <div className="absolute bottom-3 left-0 right-0">
+      <div className="absolute bottom-2 sm:bottom-3 left-0 right-0 z-20">
         <div className="flex justify-center space-x-2">
           {slides.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full ${index === currentSlide ? "bg-white" : "bg-white/50"}`}
+              className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all ${
+                index === currentSlide ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
+              }`}
               onClick={() => goToSlide(index)}
               aria-label={`Go to slide ${index + 1}`}
             />

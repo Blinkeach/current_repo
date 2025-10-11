@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ShoppingCart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface ProductCardProps {
   stock?: number; // Added stock property
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCard: React.FC<ProductCardProps> = memo(({
   id,
   name,
   price,
@@ -72,22 +72,23 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Link href={`/product/${id}`}>
-      <div className="block cursor-pointer h-full">
-        <div className="bg-white rounded-md shadow-sm hover:shadow-md transition-shadow p-3 group h-full flex flex-col">
+      <div className="block cursor-pointer h-full gpu-accelerated">
+        <div className="bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 p-3 sm:p-4 group h-full flex flex-col hover-lift border border-gray-100">
           <div className="relative mb-3">
             {(discount || badge) && (
               <span 
-                className={`absolute top-0 left-0 ${badge?.color || 'bg-red-600'} text-white text-xs px-2 py-1 rounded-br-md font-medium z-10`}
+                className={`absolute top-0 left-0 ${badge?.color || 'bg-primary'} text-white text-xs sm:text-sm px-2 py-1 rounded-br-lg font-semibold z-10 shadow-md animate-fade-in`}
               >
                 {badge?.text || `-${discount}%`}
               </span>
             )}
-            <div className="w-full h-40 relative bg-gray-50 rounded-md overflow-hidden">
+            <div className="w-full h-36 sm:h-40 md:h-44 lg:h-48 relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden">
               <img 
                 src={image} 
                 alt={name} 
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"
+                decoding="async"
                 onError={(e) => {
                   // Just hide the broken image and let CSS handle the fallback
                   const target = e.target as HTMLImageElement;
@@ -95,51 +96,59 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 }}
               />
               {/* Fallback div that shows when image fails to load */}
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm absolute inset-0 -z-10">
+              <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400 text-sm absolute inset-0 -z-10">
                 Product Image
               </div>
             </div>
-            <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
               <WishlistButton productId={id} size="sm" />
             </div>
           </div>
           
           {/* Content section with flex-grow to push buttons to bottom */}
           <div className="flex-1 flex flex-col">
-            <h3 className="font-medium text-sm line-clamp-2 mb-2 min-h-[2.5rem] leading-tight">{name}</h3>
+            <h3 className="font-semibold text-sm sm:text-base line-clamp-2 mb-2 min-h-[2.5rem] sm:min-h-[3rem] leading-tight text-gray-800 group-hover:text-primary transition-colors">{name}</h3>
             
-            <div className="flex items-center mb-2 text-xs">
+            <div className="flex items-center mb-2 text-xs sm:text-sm flex-wrap gap-1">
               <Rating 
                 value={rating} 
                 showCount={false}
                 size="sm"
-                color="green"
+                color="accent"
               />
               <span className="text-neutral-500 ml-1 truncate">
                 ({reviewCount + adminReviewCount})
-                {reviewCount === 0 && adminReviewCount > 0 && <span className="hidden sm:inline"> (Default rating set by admin)</span>}
+                {reviewCount === 0 && adminReviewCount > 0 && <span className="hidden lg:inline text-xs"> (Admin rating)</span>}
               </span>
-              <span className="mx-1 text-neutral-300">|</span>
-              {stock > 0 ? (
-                <span className="text-green-600 whitespace-nowrap">In Stock</span>
+              <span className="mx-1 text-neutral-300 hidden xs:inline">|</span>
+              {stock === 0 ? (
+                <span className="text-primary whitespace-nowrap font-semibold">Out of Stock</span>
+              ) : stock <= 5 ? (
+                <span className="text-accent whitespace-nowrap font-bold animate-pulse">
+                  🔥 Only {stock} left
+                </span>
+              ) : stock <= 10 ? (
+                <span className="text-accent whitespace-nowrap font-semibold">
+                  ⚡ Almost Gone!
+                </span>
               ) : (
-                <span className="text-red-500 whitespace-nowrap">Out of Stock</span>
+                <span className="text-green-600 whitespace-nowrap font-medium">In Stock</span>
               )}
             </div>
             
             {/* Price section with flex-grow to push buttons to bottom */}
             <div className="flex-1 flex flex-col justify-end">
               <div className="mb-3">
-                <div className="flex items-end flex-wrap gap-1">
-                  <span className="font-semibold text-base text-gray-900">₹{(price/100).toLocaleString('en-IN')}</span>
+                <div className="flex items-end flex-wrap gap-1 sm:gap-2">
+                  <span className="font-bold text-lg sm:text-xl text-primary">₹{(price/100).toLocaleString('en-IN')}</span>
                   {originalPrice && originalPrice > price && (
                     <>
-                      <span className="line-through text-neutral-500 text-sm">
+                      <span className="line-through text-neutral-400 text-sm sm:text-base">
                         ₹{(originalPrice/100).toLocaleString('en-IN')}
                       </span>
                       {discount && discount > 0 && (
-                        <span className="text-red-600 text-xs font-medium">
-                          {discount}% off
+                        <span className="text-accent text-xs sm:text-sm font-bold bg-accent/10 px-2 py-0.5 rounded-full">
+                          {discount}% OFF
                         </span>
                       )}
                     </>
@@ -151,11 +160,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <div className="flex gap-2">
                 <Button 
                   onClick={handleAddToCart} 
-                  className="flex-1 bg-primary hover:bg-primary-dark text-white py-2 px-3 rounded text-sm font-medium transition-colors h-9"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 h-9 sm:h-10 btn-glow shadow-md hover:shadow-lg active:scale-95"
                   disabled={stock === 0}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-1" />
-                  Add to Cart
+                  <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="hidden xs:inline">Add to Cart</span>
+                  <span className="xs:hidden">Add</span>
                 </Button>
                 <Button
                   onClick={(e) => {
@@ -165,9 +175,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   }}
                   variant="outline"
                   size="sm"
-                  className="px-2 h-9 flex-shrink-0"
+                  className="px-2 sm:px-3 h-9 sm:h-10 flex-shrink-0 border-2 border-secondary hover:bg-secondary hover:text-white transition-all duration-300 active:scale-95"
                 >
-                  <Share2 className="h-4 w-4" />
+                  <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
@@ -187,6 +197,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
       />
     </Link>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;

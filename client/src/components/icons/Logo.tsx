@@ -27,11 +27,11 @@ const Logo: React.FC<LogoProps> = ({ className = '', size = 'medium', clickable 
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Determine size classes
+  // Determine size classes - Increased for better visibility
   const sizeClasses = {
-    small: 'h-8',
-    medium: 'h-12',
-    large: 'h-16',
+    small: 'h-10 sm:h-12',
+    medium: 'h-14 sm:h-16',
+    large: 'h-18 sm:h-20',
   };
 
   // Use configured logo or fallback to default

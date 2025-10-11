@@ -23,6 +23,7 @@ import wishlistController from "./controllers/wishlist";
 import socialRoutes from "./routes/social";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { deliveryService } from "./services/delivery";
+import { r2StorageService } from "./r2Storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static files from the uploads directory
@@ -200,10 +201,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/delivery/track/:trackingId", async (req, res) => {
     try {
       const { trackingId } = req.params;
+      console.log(`🔍 API Route: GET /api/delivery/track/${trackingId}`);
+      console.log(`📋 API Route: Fetching tracking info for ID: ${trackingId}`);
+      
       const result = await deliveryService.getTrackingInfo(trackingId);
+      
+      console.log(`✅ API Route: Tracking info retrieved successfully for ID: ${trackingId}`);
+      console.log(`📦 API Route: Result:`, JSON.stringify(result, null, 2));
+      
       res.json(result);
     } catch (error) {
-      console.error("Error getting tracking info:", error);
+      console.error("❌ API Route: Error getting tracking info:", error);
       res.status(500).json({ error: "Failed to get tracking information" });
     }
   });
@@ -239,6 +247,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Warehouse registration endpoint
+  app.post("/api/delivery/register-warehouse", isAdmin, async (req, res) => {
+    try {
+      const warehouseData = req.body;
+      
+      // Validate required fields
+      const requiredFields = ['name', 'address', 'city', 'state', 'pincode', 'contactPerson', 'contactPhone', 'contactEmail'];
+      const missingFields = requiredFields.filter(field => !warehouseData[field]);
+      
+      if (missingFields.length > 0) {
+        return res.status(400).json({ 
+          error: `Missing required fields: ${missingFields.join(', ')}` 
+        });
+      }
+      
+      console.log('🏭 API Route: Registering warehouse with Delhivery...');
+      console.log('📋 Warehouse Data:', JSON.stringify(warehouseData, null, 2));
+      
+      const result = await deliveryService.registerWarehouse(warehouseData);
+      
+      console.log('✅ API Route: Warehouse registration response:', JSON.stringify(result, null, 2));
+      
+      res.json(result);
+    } catch (error) {
+      console.error("❌ API Route: Error registering warehouse:", error);
+      res.status(500).json({ error: "Failed to register warehouse" });
+    }
+  });
+
   // Invoice upload and download routes
   app.post("/api/invoices/upload", isAdmin, async (req, res) => {
     try {
@@ -251,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Local upload endpoint for development
+  // Local upload endpoint for development (now uses R2 if available)
   app.post("/api/local-upload/invoice/:invoiceId", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
@@ -259,8 +296,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { invoiceId } = req.params;
-      const { localStorageService } = await import('./localStorage');
       
+      // Try R2 storage first
+      if (r2StorageService.isAvailable()) {
+        try {
+          const fileName = `${invoiceId}.pdf`;
+          const result = await r2StorageService.uploadInvoice(req.file.buffer, fileName);
+          console.log('Invoice uploaded to R2:', result.url);
+          
+          return res.json({ 
+            success: true, 
+            filePath: `/invoices/${fileName}`,
+            url: result.url,
+            message: "File uploaded successfully to R2" 
+          });
+        } catch (r2Error) {
+          console.error('R2 upload failed, falling back to local storage:', r2Error);
+        }
+      }
+
+      // Fallback to local storage
+      const { localStorageService } = await import('./localStorage');
       const filePath = await localStorageService.saveInvoiceFile(
         invoiceId, 
         req.file.buffer, 
@@ -270,19 +326,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         filePath,
-        message: "File uploaded successfully" 
+        message: "File uploaded successfully to local storage" 
       });
     } catch (error) {
-      console.error("Error uploading file locally:", error);
+      console.error("Error uploading file:", error);
       res.status(500).json({ error: "Failed to upload file" });
     }
   });
 
-  // PUT endpoint for direct file uploads (LocalFileUploader)
+  // PUT endpoint for direct file uploads (LocalFileUploader, now uses R2 if available)
   app.put("/api/local-upload/invoice/:invoiceId", async (req, res) => {
     try {
       const { invoiceId } = req.params;
-      const { localStorageService } = await import('./localStorage');
+      console.log('📤 PUT /api/local-upload/invoice/:invoiceId - Invoice ID:', invoiceId);
       
       // Read the raw body data
       const chunks: Buffer[] = [];
@@ -293,12 +349,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.on('end', async () => {
         try {
           const fileBuffer = Buffer.concat(chunks);
+          console.log('📦 Received file buffer, size:', fileBuffer.length, 'bytes');
           
           if (fileBuffer.length === 0) {
+            console.error('❌ No file data received');
             return res.status(400).json({ error: "No file data received" });
           }
 
-          // Save to local storage with a generic filename
+          // Try R2 storage first
+          console.log('🔍 Checking R2 availability:', r2StorageService.isAvailable());
+          if (r2StorageService.isAvailable()) {
+            try {
+              const fileName = `${invoiceId}.pdf`;
+              console.log('☁️ Uploading to R2 with filename:', fileName);
+              const publicUrl = await r2StorageService.uploadInvoice(fileBuffer, fileName);
+              console.log('✅ Invoice uploaded to R2 successfully!');
+              console.log('🔗 Public URL:', publicUrl);
+              
+              return res.json({ 
+                success: true, 
+                filePath: publicUrl,
+                url: publicUrl,
+                message: "File uploaded successfully to R2" 
+              });
+            } catch (r2Error) {
+              console.error('❌ R2 upload failed, falling back to local storage:', r2Error);
+            }
+          } else {
+            console.log('⚠️ R2 not available, using local storage');
+          }
+
+          // Fallback to local storage
+          const { localStorageService } = await import('./localStorage');
           const filePath = await localStorageService.saveInvoiceFile(
             invoiceId, 
             fileBuffer, 
@@ -308,7 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.json({ 
             success: true, 
             filePath,
-            message: "File uploaded successfully" 
+            message: "File uploaded successfully to local storage" 
           });
         } catch (saveError) {
           console.error('Error saving file:', saveError);
@@ -326,10 +408,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET endpoint for downloading files
+  // GET endpoint for downloading files (now checks R2 first)
   app.get("/api/local-upload/invoice/:invoiceId", async (req, res) => {
     try {
       const { invoiceId } = req.params;
+      console.log(`📥 GET /api/local-upload/invoice/:invoiceId - Invoice ID: ${invoiceId}`);
+      
+      // Try R2 storage first (use capital 'Invoices' to match bucket structure)
+      if (r2StorageService.isAvailable()) {
+        try {
+          const fileName = `Invoices/${invoiceId}.pdf`;
+          console.log(`🔍 Checking R2 for file: ${fileName}`);
+          const exists = await r2StorageService.fileExists(fileName);
+          console.log(`📂 File exists in R2: ${exists}`);
+          
+          if (exists) {
+            console.log(`⬇️ Downloading file from R2...`);
+            const fileBuffer = await r2StorageService.getFileBuffer(fileName);
+            console.log(`✅ File downloaded from R2, size: ${fileBuffer.length} bytes`);
+            
+            // Set proper headers for PDF download
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoiceId}.pdf"`);
+            res.setHeader('Content-Length', fileBuffer.length);
+            res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
+            res.setHeader('Access-Control-Allow-Methods', 'GET');
+            
+            console.log(`📤 Sending file to client...`);
+            return res.send(fileBuffer);
+          } else {
+            console.log(`⚠️ File not found in R2, trying local storage...`);
+          }
+        } catch (r2Error) {
+          console.error('❌ R2 download failed, trying local storage:', r2Error);
+        }
+      } else {
+        console.log(`⚠️ R2 not available, using local storage`);
+      }
+
+      // Fallback to local storage
       const fs = await import('fs').then(m => m.promises);
       const path = await import('path');
       
@@ -362,19 +479,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { invoiceUrl } = req.body;
       
+      console.log('📝 PUT /api/orders/:id/invoice - Order ID:', id);
+      console.log('📎 Received invoice URL:', invoiceUrl);
+      
       if (!invoiceUrl) {
+        console.error('❌ No invoice URL provided');
         return res.status(400).json({ error: "Invoice URL is required" });
       }
 
       const objectStorageService = new ObjectStorageService();
       const normalizedPath = objectStorageService.normalizeInvoicePath(invoiceUrl);
+      console.log('🔄 Normalized path:', normalizedPath);
       
       const updatedOrder = await storage.updateOrderInvoice(parseInt(id), normalizedPath);
       
       if (!updatedOrder) {
+        console.error('❌ Order not found:', id);
         return res.status(404).json({ error: "Order not found" });
       }
 
+      console.log('✅ Invoice URL saved to database for order:', id);
+      console.log('💾 Saved URL:', updatedOrder.invoiceUrl);
       res.json(updatedOrder);
     } catch (error) {
       console.error("Error updating order invoice:", error);
@@ -419,13 +544,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve uploaded invoice files (redirect old URLs to new local storage)
+  // Serve uploaded invoice files
   app.get("/invoices/:invoicePath(*)", async (req, res) => {
     try {
       const invoicePath = req.params.invoicePath;
+      console.log('📥 Invoice download request for:', invoicePath);
       
-      // For local development, redirect old invoice URLs to local-upload route
-      return res.redirect(`/api/local-upload/invoice/${invoicePath}`);
+      // Try R2 storage first (use capital 'Invoices' to match bucket structure)
+      if (r2StorageService.isAvailable()) {
+        try {
+          const key = `Invoices/${invoicePath}`;
+          console.log('🔍 Checking R2 for key:', key);
+          const exists = await r2StorageService.fileExists(key);
+          
+          if (exists) {
+            console.log('✅ Found invoice in R2, fetching:', key);
+            const fileBuffer = await r2StorageService.getFileBuffer(key);
+            
+            // Set proper headers for PDF download
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoicePath}"`);
+            res.setHeader('Content-Length', fileBuffer.length);
+            
+            return res.send(fileBuffer);
+          } else {
+            console.log('⚠️ Invoice not found in R2');
+          }
+        } catch (r2Error) {
+          console.error('❌ R2 download failed, trying local storage:', r2Error);
+        }
+      }
+      
+      // Fallback to local storage - redirect to local-upload route
+      console.log('🔄 Redirecting to local storage:', invoicePath);
+      return res.redirect(`/api/local-upload/invoice/${invoicePath.replace('.pdf', '')}`);
     } catch (error) {
       console.error("Error serving invoice:", error);
       return res.status(500).json({ error: "Failed to serve invoice" });
@@ -617,9 +769,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title, description, buttonText, buttonLink, displayOrder, bannerType } = req.body;
       let imageUrl = req.body.imageUrl;
 
-      // If a new image was uploaded, use the uploaded file path
+      // If a new image was uploaded, handle it
       if (req.file) {
-        imageUrl = `/uploads/${req.file.filename}`;
+        // Try to upload to R2 first, fallback to local storage
+        if (r2StorageService.isAvailable()) {
+          try {
+            imageUrl = await r2StorageService.uploadCarouselImage(
+              req.file.buffer,
+              req.file.originalname,
+              req.file.mimetype
+            );
+            console.log('Carousel image uploaded to R2:', imageUrl);
+          } catch (r2Error) {
+            console.error('R2 upload failed, falling back to local storage:', r2Error);
+            // Fallback to local storage
+            const fs = await import('fs');
+            const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+            const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+            fs.writeFileSync(filePath, req.file.buffer);
+            imageUrl = `/uploads/${uniqueFilename}`;
+          }
+        } else {
+          // Use local storage if R2 is not configured
+          const fs = await import('fs');
+          const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+          const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+          fs.writeFileSync(filePath, req.file.buffer);
+          imageUrl = `/uploads/${uniqueFilename}`;
+        }
       }
 
       const carouselImage = await storage.createCarouselImage({
@@ -645,9 +822,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title, description, buttonText, buttonLink, displayOrder, bannerType } = req.body;
       let imageUrl = req.body.imageUrl;
 
-      // If a new image was uploaded, use the uploaded file path
+      // If a new image was uploaded, handle it
       if (req.file) {
-        imageUrl = `/uploads/${req.file.filename}`;
+        // Try to upload to R2 first, fallback to local storage
+        if (r2StorageService.isAvailable()) {
+          try {
+            imageUrl = await r2StorageService.uploadCarouselImage(
+              req.file.buffer,
+              req.file.originalname,
+              req.file.mimetype
+            );
+            console.log('Carousel image uploaded to R2:', imageUrl);
+          } catch (r2Error) {
+            console.error('R2 upload failed, falling back to local storage:', r2Error);
+            // Fallback to local storage
+            const fs = await import('fs');
+            const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+            const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+            fs.writeFileSync(filePath, req.file.buffer);
+            imageUrl = `/uploads/${uniqueFilename}`;
+          }
+        } else {
+          // Use local storage if R2 is not configured
+          const fs = await import('fs');
+          const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+          const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+          fs.writeFileSync(filePath, req.file.buffer);
+          imageUrl = `/uploads/${uniqueFilename}`;
+        }
       }
 
       const updatedImage = await storage.updateCarouselImage(imageId, {
@@ -707,7 +909,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Title, description, button text, and button link are required" });
       }
 
-      const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.imageUrl;
+      let imageUrl = req.body.imageUrl;
+
+      // If a new image was uploaded, handle it
+      if (req.file) {
+        // Try to upload to R2 first, fallback to local storage
+        if (r2StorageService.isAvailable()) {
+          try {
+            imageUrl = await r2StorageService.uploadCarouselImage(
+              req.file.buffer,
+              req.file.originalname,
+              req.file.mimetype
+            );
+            console.log('Hero slide image uploaded to R2:', imageUrl);
+          } catch (r2Error) {
+            console.error('R2 upload failed, falling back to local storage:', r2Error);
+            // Fallback to local storage
+            const fs = await import('fs');
+            const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+            const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+            fs.writeFileSync(filePath, req.file.buffer);
+            imageUrl = `/uploads/${uniqueFilename}`;
+          }
+        } else {
+          // Use local storage if R2 is not configured
+          const fs = await import('fs');
+          const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+          const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+          fs.writeFileSync(filePath, req.file.buffer);
+          imageUrl = `/uploads/${uniqueFilename}`;
+        }
+      }
 
       const heroSlide = await storage.createHeroSlide({
         title,
@@ -732,8 +964,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title, description, buttonText, buttonLink, displayOrder, isActive } = req.body;
       
       let imageUrl = req.body.imageUrl;
+      
+      // If a new image was uploaded, handle it
       if (req.file) {
-        imageUrl = `/uploads/${req.file.filename}`;
+        // Try to upload to R2 first, fallback to local storage
+        if (r2StorageService.isAvailable()) {
+          try {
+            imageUrl = await r2StorageService.uploadCarouselImage(
+              req.file.buffer,
+              req.file.originalname,
+              req.file.mimetype
+            );
+            console.log('Hero slide image uploaded to R2:', imageUrl);
+          } catch (r2Error) {
+            console.error('R2 upload failed, falling back to local storage:', r2Error);
+            // Fallback to local storage
+            const fs = await import('fs');
+            const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+            const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+            fs.writeFileSync(filePath, req.file.buffer);
+            imageUrl = `/uploads/${uniqueFilename}`;
+          }
+        } else {
+          // Use local storage if R2 is not configured
+          const fs = await import('fs');
+          const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+          const filePath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+          fs.writeFileSync(filePath, req.file.buffer);
+          imageUrl = `/uploads/${uniqueFilename}`;
+        }
       }
 
       const updatedSlide = await storage.updateHeroSlide(slideId, {

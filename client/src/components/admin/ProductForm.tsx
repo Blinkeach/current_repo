@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -53,7 +53,7 @@ const productSchema = z.object({
     .array(z.string())
     .min(0, { message: "Images will be added during submission" }),
   highlights: z
-    .array(z.string())
+    .array(z.string().min(1, "Highlight cannot be empty"))
     .min(1, { message: "At least one highlight is required" }),
   colorSizeCombinations: z
     .array(z.object({
@@ -212,7 +212,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       sgst: product?.sgst || 0,
       cgst: product?.cgst || 0,
       images: product?.images || [], // No default empty image URL
-      highlights: product?.highlights || [""],
+      highlights: product?.highlights && product.highlights.length > 0 ? product.highlights : ["Feature 1"],
       colorSizeCombinations: getInitialColorSizeCombinations(),
       rating: product?.rating || 0,
       reviewCount: product?.reviewCount || 0,
@@ -242,6 +242,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           {} as Record<string, string>,
         ),
       };
+
+      console.log("=== SENDING TO API ===");
+      console.log("Product ID:", product?.id);
+      console.log("Formatted data colorSizeCombinations:", JSON.stringify(formattedData.colorSizeCombinations, null, 2));
+      console.log("Full formatted data:", formattedData);
 
       if (product?.id) {
         // Update existing product
@@ -279,13 +284,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       console.log("Current color state:", colorSizeCombinations);
       console.log("Image uploads:", imageUploads.length);
       
-      // Validate form before proceeding
-      if (!form.formState.isValid) {
+      // Trigger form validation first to ensure all fields are validated
+      const isValid = await form.trigger();
+      
+      // Check if validation passed
+      if (!isValid) {
         console.log("Form validation failed");
         console.log("All form errors:", form.formState.errors);
-        
-        // Trigger form validation to show errors
-        await form.trigger();
         
         toast({
           title: "Form Validation Error",
@@ -338,7 +343,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       values.images = finalImages;
       values.model3d = final3dModel;
 
-
+      // Clean up highlights - remove empty strings
+      values.highlights = values.highlights.filter(h => h && h.trim().length > 0);
+      
+      // Ensure at least one highlight exists
+      if (values.highlights.length === 0) {
+        toast({
+          title: "Validation Error",
+          description: "Please add at least one product highlight.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Clean up color-size combinations - remove empty entries
       const cleanedColorCombinations = colorSizeCombinations
@@ -399,6 +415,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       sku?: string;
     }>;
   }>>(getInitialColorSizeCombinations());
+
+  // Sync state when product prop changes
+  useEffect(() => {
+    if (product) {
+      // Sync existing images
+      setExistingImages(product.images || []);
+      
+      // Sync color-size combinations
+      const initialCombinations = getInitialColorSizeCombinations();
+      setColorSizeCombinations(initialCombinations);
+      form.setValue('colorSizeCombinations', initialCombinations);
+      
+      console.log("Product prop changed, synced color combinations:", initialCombinations);
+    }
+  }, [product?.id]); // Only re-run when product ID changes
 
   // Functions for managing color-size combinations
   const addColorCombination = () => {

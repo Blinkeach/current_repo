@@ -2,6 +2,7 @@ import { Storage, File } from "@google-cloud/storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
 import { localStorageService } from "./localStorage";
+import { r2StorageService } from "./r2Storage";
 import path from "path";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
@@ -55,6 +56,31 @@ export class ObjectStorageService {
   // Downloads an object to the response.
   async downloadObject(file: File | string, res: Response, cacheTtlSec: number = 3600) {
     try {
+      // Handle R2 storage download
+      if (r2StorageService.isAvailable() && typeof file === 'string') {
+        try {
+          const invoiceId = file.slice(10); // Remove "/invoices/"
+          const fileName = `invoices/${invoiceId}`;
+          const exists = await r2StorageService.fileExists(fileName);
+          
+          if (exists) {
+            const fileBuffer = await r2StorageService.getFileBuffer(fileName);
+            const baseName = path.basename(invoiceId);
+            
+            res.set({
+              "Content-Type": "application/octet-stream",
+              "Content-Length": fileBuffer.length.toString(),
+              "Cache-Control": `private, max-age=${cacheTtlSec}`,
+              "Content-Disposition": `attachment; filename="${baseName}"`,
+            });
+            
+            return res.send(fileBuffer);
+          }
+        } catch (error) {
+          console.error('Failed to download from R2, falling back:', error);
+        }
+      }
+
       // Handle local storage download
       if (isLocalDevelopment && typeof file === 'string') {
         const exists = await localStorageService.invoiceFileExists(file);
@@ -110,37 +136,30 @@ export class ObjectStorageService {
 
   // Gets the upload URL for an invoice file.
   async getInvoiceUploadURL(): Promise<string> {
-    // Use local storage in development mode
-    if (isLocalDevelopment) {
-      return await localStorageService.getInvoiceUploadURL();
-    }
-
-    const privateObjectDir = this.getPrivateObjectDir();
-    if (!privateObjectDir) {
-      throw new Error(
-        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
-          "tool and set PRIVATE_OBJECT_DIR env var."
-      );
-    }
-
+    // Always use the local upload endpoint which handles R2 internally
+    // This ensures we get a proper JSON response with the file URL
     const invoiceId = randomUUID();
-    const fullPath = `${privateObjectDir}/invoices/${invoiceId}`;
-
-    const { bucketName, objectName } = parseObjectPath(fullPath);
-
-    // Sign URL for PUT method with TTL
-    return signObjectURL({
-      bucketName,
-      objectName,
-      method: "PUT",
-      ttlSec: 900,
-    });
+    return `/api/local-upload/invoice/${invoiceId}`;
   }
 
   // Gets the invoice file from the object path.
   async getInvoiceFile(objectPath: string): Promise<File | string> {
     if (!objectPath.startsWith("/invoices/")) {
       throw new ObjectNotFoundError();
+    }
+
+    // Try R2 storage first if available
+    if (r2StorageService.isAvailable()) {
+      try {
+        const invoiceId = objectPath.slice(10); // Remove "/invoices/"
+        const fileName = `invoices/${invoiceId}`;
+        const exists = await r2StorageService.fileExists(fileName);
+        if (exists) {
+          return objectPath; // Return path for R2 storage
+        }
+      } catch (error) {
+        console.error('Failed to check R2 file, falling back:', error);
+      }
     }
 
     // Use local storage in development mode
@@ -169,6 +188,11 @@ export class ObjectStorageService {
   }
 
   normalizeInvoicePath(rawPath: string): string {
+    // Handle R2 URLs - keep them as full URLs since R2 is publicly accessible
+    if (rawPath.includes('.r2.dev') || rawPath.includes('r2.cloudflarestorage.com')) {
+      return rawPath;
+    }
+
     // Use local storage normalization in development mode
     if (isLocalDevelopment) {
       return localStorageService.normalizeInvoicePath(rawPath);
@@ -200,6 +224,21 @@ export class ObjectStorageService {
   async deleteInvoiceFile(objectPath: string): Promise<void> {
     if (!objectPath.startsWith("/invoices/")) {
       throw new ObjectNotFoundError();
+    }
+
+    // Try R2 storage first if available
+    if (r2StorageService.isAvailable()) {
+      try {
+        const invoiceId = objectPath.slice(10); // Remove "/invoices/"
+        const fileName = `invoices/${invoiceId}`;
+        const exists = await r2StorageService.fileExists(fileName);
+        if (exists) {
+          await r2StorageService.deleteFile(fileName);
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to delete from R2, falling back:', error);
+      }
     }
 
     // Use local storage in development mode

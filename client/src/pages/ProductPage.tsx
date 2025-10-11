@@ -72,17 +72,17 @@ const ProductPage: React.FC = () => {
         <meta name="description" content={productDescription.slice(0, 160)} />
       </Helmet>
 
-      <div>
+      <div className="w-full overflow-x-hidden">
         {/* Product details section */}
         <ProductDetails productId={productId} />
         
         {/* Related Products */}
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          <Separator className="mb-6" />
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-10">
+          <Separator className="mb-4 sm:mb-6" />
           
-          <h2 className="text-xl font-semibold mb-6">You may also like</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">You may also like</h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {displayRelatedProducts.map((product) => {
               // Ensure we have all required properties
               const imageUrl = product.image || (product.images && product.images.length > 0 ? product.images[0] : '');

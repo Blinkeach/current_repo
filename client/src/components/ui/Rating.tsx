@@ -8,7 +8,7 @@ interface RatingProps {
   showCount?: boolean;
   showValue?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  color?: 'amber' | 'green';
+  color?: 'amber' | 'green' | 'accent';
   variant?: 'flat' | 'chip';
   className?: string;
 }
@@ -60,6 +60,11 @@ export function Rating({
       filled: 'text-green-500 fill-green-500',
       empty: 'text-green-500 fill-transparent',
       text: 'text-green-600'
+    },
+    accent: {
+      filled: 'text-accent fill-accent',
+      empty: 'text-accent/30 fill-transparent',
+      text: 'text-accent'
     }
   };
 
@@ -110,6 +115,7 @@ export function Rating({
       currentSize.gap,
       variant === 'chip' && color === 'amber' && 'bg-amber-50 ring-1 ring-amber-100 rounded-full px-2 py-0.5',
       variant === 'chip' && color === 'green' && 'bg-emerald-50 ring-1 ring-emerald-100 rounded-full px-2 py-0.5',
+      variant === 'chip' && color === 'accent' && 'bg-accent/10 ring-1 ring-accent/20 rounded-full px-2 py-0.5',
       className
     )}>
       <div className={cn('flex', currentSize.gap)} role="img" aria-label={`Rated ${rating.toFixed(1)} out of 5`}>

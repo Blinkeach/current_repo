@@ -92,22 +92,38 @@ export class DeliveryService {
   private partner: DeliveryPartner;
   
   constructor(partner: DeliveryPartner = 'delhivery') {
+    console.log('\n📦 ========== DELIVERY SERVICE INITIALIZATION ==========');
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    
     this.partner = partner;
     this.config = defaultConfig[partner];
     
+    console.log('🚚 Delivery Configuration:');
+    console.log('   - Partner:', this.partner);
+    console.log('   - Service Name:', this.config.serviceName);
+    console.log('   - Base URL:', this.config.baseUrl);
+    console.log('   - API Key:', this.config.apiKey ? '***' + this.config.apiKey.substring(this.config.apiKey.length - 8) : 'NOT SET');
+    
     // Check if the API key is set
     if (!this.config.apiKey) {
-      console.warn(`${this.config.serviceName} API key is not set. Using mock delivery service for development.`);
+      console.warn(`⚠️ ${this.config.serviceName} API key is not set. Using mock delivery service for development.`);
+    } else {
+      console.log(`✅ ${this.config.serviceName} API key configured successfully`);
     }
+    console.log('📦 ====================================================\n');
   }
   
   /**
    * Create a delivery shipment for an order
    */
   async createShipment(request: DeliveryRequest): Promise<DeliveryResponse> {
+    console.log(`🚀 DeliveryService: Creating shipment for order #${request.orderId}`);
+    console.log(`📦 DeliveryService: Partner: ${this.partner}, Service: ${this.config.serviceName}`);
+    
     try {
       // Check if API key is available
       if (!this.config.apiKey) {
+        console.warn(`⚠️ DeliveryService: ${this.config.serviceName} API key is not configured`);
         return {
           success: false,
           message: `${this.config.serviceName} API key is not configured`
@@ -115,14 +131,17 @@ export class DeliveryService {
       }
 
       if (this.partner === 'delhivery') {
+        console.log(`📮 DeliveryService: Using Delhivery API for order #${request.orderId}`);
         return await this.createDelhiveryShipment(request);
       }
       
       // For other partners, use mock data for now
-      console.log(`Creating shipment with ${this.config.serviceName} for order #${request.orderId}`);
+      console.log(`🔧 DeliveryService: Using mock shipment for ${this.config.serviceName}, order #${request.orderId}`);
       
       const trackingId = `${this.partner.toUpperCase()}-${Date.now()}-${request.orderId}`;
       const trackingUrl = this.config.trackingUrlTemplate.replace('{trackingId}', trackingId);
+      
+      console.log(`✅ DeliveryService: Mock shipment created - Tracking ID: ${trackingId}`);
       
       return {
         success: true,
@@ -132,7 +151,7 @@ export class DeliveryService {
         message: 'Shipment created successfully'
       };
     } catch (error) {
-      console.error(`Error creating shipment with ${this.config.serviceName}:`, error);
+      console.error(`❌ DeliveryService: Error creating shipment with ${this.config.serviceName}:`, error);
       return {
         success: false,
         message: `Failed to create shipment with ${this.config.serviceName}`,
@@ -145,53 +164,134 @@ export class DeliveryService {
    * Create shipment with Delhivery API
    */
   private async createDelhiveryShipment(request: DeliveryRequest): Promise<DeliveryResponse> {
+    console.log('\n📮 ========== DELHIVERY SHIPMENT CREATION ==========');
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    console.log(`📦 Creating shipment for order #${request.orderId}`);
+    
     try {
-      const shipmentData = {
-        shipment: [{
-          name: request.recipientName,
-          add: request.deliveryAddress,
-          pin: request.pincode,
-          city: request.city,
-          state: request.state,
-          country: 'India',
-          phone: request.recipientPhone,
-          order: request.orderId.toString(),
-          products_desc: request.items.map(item => `${item.name} x ${item.quantity}`).join(', '),
-          cod_amount: request.isCod ? request.orderValue / 100 : 0, // Convert paise to rupees
-          order_date: new Date().toISOString().split('T')[0],
-          total_amount: request.orderValue / 100, // Convert paise to rupees
-          seller_add: 'WARD NO. 07, KB LANE, NEAR CHAURAHA MASJID, PANCHAYATI AKHARA Gaya, BIHAR, 823001',
-          seller_name: 'Blinkeach',
-          seller_inv: '',
-          quantity: request.items.reduce((total, item) => total + item.quantity, 0),
-          waybill: '',
-          shipment_width: request.dimensions?.width || 10,
-          shipment_height: request.dimensions?.height || 10,
-          weight: request.weight,
-          seller_gst_tin: '',
-          shipping_mode: 'Express',
-          address_type: 'home'
-        }]
-      };
+      // Get Delhivery configuration from environment
+      const clientName = process.env.DELHIVERY_CLIENT_NAME || 'Blinkeach';
+      const pickupLocation = process.env.DELHIVERY_PICKUP_LOCATION || 'Blinkeach Warehouse';
+      const sellerAddress = process.env.COMPANY_ADDRESS || process.env.DELHIVERY_PICKUP_LOCATION || 'Blinkeach Warehouse';
+      
+      // Generate invoice number if not provided
+      const invoiceNumber = `INV-${request.orderId}-${Date.now()}`;
+      
+      // const shipmentData = {
+      //   shipments: [{
+      //     name: request.recipientName,
+      //     address: request.deliveryAddress,
+      //     pin: request.pincode,
+      //     city: request.city,
+      //     state: request.state,
+      //     country: 'India',
+      //     phone: request.recipientPhone,
+      //     order: request.orderId.toString(),
+      //     payment_mode: request.isCod ? 'COD' : 'Prepaid',
+      //     products_desc: request.items.map(item => `${item.name} x ${item.quantity}`).join(', '),
+      //     cod_amount: request.isCod ? (request.orderValue / 100).toString() : '0',
+      //     order_date: new Date().toISOString().split('T')[0],
+      //     total_amount: (request.orderValue / 100).toString(),
+      //     seller_address: pickupLocation,
+      //     seller_name: clientName,
+      //     seller_inv: invoiceNumber,
+      //     quantity: request.items.reduce((total, item) => total + item.quantity, 0).toString(),
+      //     waybill: '',
+      //     shipment_width: (request.dimensions?.width || 10).toString(),
+      //     shipment_height: (request.dimensions?.height || 10).toString(),
+      //     weight: request.weight.toString(),
+      //     seller_gst_tin: '',
+      //     shipping_mode: 'Surface',
+      //     address_type: 'home',
+      //     client: clientName,
+      //     pickup_location: pickupLocation
+      //   }]
+      // };
+const shipmentData = {
+  shipments: [{
+    name: request.recipientName,
+    address: request.deliveryAddress,
+    pin: request.pincode,
+    city: request.city,
+    state: request.state,
+    country: 'India',
+    phone: request.recipientPhone,
+    order: request.orderId.toString(),
+    products_desc: request.items.map(item => `${item.name} x ${item.quantity}`).join(', '),
+    cod: request.isCod, // boolean!
+    cod_amount: request.isCod ? request.orderValue / 100 : 0, // number!
+    order_date: new Date().toISOString().split('T')[0],
+    total_amount: request.orderValue / 100, // number!
+    seller_address: sellerAddress,
+    seller_name: clientName,
+    seller_inv: invoiceNumber,
+    quantity: request.items.reduce((total, item) => total + item.quantity, 0), // number!
+    waybill: '',
+    shipment_width: request.dimensions?.width || 10, // number!
+    shipment_height: request.dimensions?.height || 10, // number!
+    weight: request.weight, // number!
+    seller_gst_tin: '',
+    shipping_mode: 'Surface',
+    address_type: 'home',
+    client: clientName,
+    pickup_location: pickupLocation,
+    payment_mode: request.isCod ? 'COD' : 'Prepaid' // optional, for your own records
+  }]
+};
 
-      console.log('Creating Delhivery shipment with data:', JSON.stringify(shipmentData, null, 2));
 
+      console.log('📋 Delhivery Shipment Details:');
+      console.log('   - Recipient:', request.recipientName);
+      console.log('   - Phone:', request.recipientPhone);
+      console.log('   - Address:', request.deliveryAddress);
+      console.log('   - City:', request.city);
+      console.log('   - State:', request.state);
+      console.log('   - Pincode:', request.pincode);
+      console.log('   - Order Value: ₹' + (request.orderValue / 100).toFixed(2));
+      console.log('   - Payment Mode:', request.isCod ? 'COD' : 'Prepaid');
+      console.log('   - Weight:', request.weight + ' kg');
+      console.log('   - Items:', request.items.length);
+      console.log('   - Invoice Number:', invoiceNumber);
+      console.log('   - Client:', clientName);
+      console.log('   - Pickup Location:', pickupLocation);
+      console.log('   - Seller Address:', sellerAddress);
+      console.log('\n📦 Full Shipment Data:', JSON.stringify(shipmentData, null, 2));
+
+      console.log(`\n🌐 Sending request to Delhivery API...`);
+      console.log(`   - URL: ${this.config.baseUrl}/cmu/create.json`);
+      console.log(`   - API Key: ***${this.config.apiKey.substring(this.config.apiKey.length - 8)}`);
+      
+      // Delhivery requires the data to be sent as form-urlencoded with 'format' and 'data' parameters
+      const formData = new URLSearchParams();
+      formData.append('format', 'json');
+      formData.append('data', JSON.stringify(shipmentData));
+      
       const response = await fetch(`${this.config.baseUrl}/cmu/create.json`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': `Token ${this.config.apiKey}`,
           'Accept': 'application/json'
         },
-        body: JSON.stringify(shipmentData)
+        body: formData.toString()
       });
 
+      console.log(`\n📡 Delhivery API Response:`);
+      console.log(`   - Status Code: ${response.status}`);
+      console.log(`   - Status Text: ${response.statusText}`);
+      
       const responseData = await response.json();
-      console.log('Delhivery API Response:', responseData);
+      console.log('📦 Response Data:', JSON.stringify(responseData, null, 2));
 
       if (response.ok && responseData.success) {
         const waybill = responseData.packages?.[0]?.waybill || responseData.waybill;
         const trackingUrl = this.config.trackingUrlTemplate.replace('{trackingId}', waybill);
+        
+        console.log(`\n✅ ========== SHIPMENT CREATED SUCCESSFULLY ==========`);
+        console.log(`   - Waybill/Tracking ID: ${waybill}`);
+        console.log(`   - Tracking URL: ${trackingUrl}`);
+        console.log(`   - Estimated Delivery: ${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString()}`);
+        console.log(`📮 ====================================================\n`);
         
         return {
           success: true,
@@ -201,6 +301,10 @@ export class DeliveryService {
           message: 'Delhivery shipment created successfully'
         };
       } else {
+        console.error(`\n❌ ========== SHIPMENT CREATION FAILED ==========`);
+        console.error(`   - Message: ${responseData.message || 'Unknown error'}`);
+        console.error(`   - Errors:`, responseData.errors || ['Unknown error from Delhivery API']);
+        console.error(`📮 ================================================\n`);
         return {
           success: false,
           message: responseData.message || 'Failed to create Delhivery shipment',
@@ -208,7 +312,10 @@ export class DeliveryService {
         };
       }
     } catch (error) {
-      console.error('Error creating Delhivery shipment:', error);
+      console.error('\n❌ ========== SHIPMENT CREATION ERROR ==========');
+      console.error('Error details:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('📮 ================================================\n');
       return {
         success: false,
         message: 'Failed to create Delhivery shipment',
@@ -221,9 +328,13 @@ export class DeliveryService {
    * Get tracking information for a shipment
    */
   async getTrackingInfo(trackingId: string): Promise<any> {
+    console.log(`🔍 DeliveryService: Getting tracking info for ID: ${trackingId}`);
+    console.log(`📦 DeliveryService: Partner: ${this.partner}, Service: ${this.config.serviceName}`);
+    
     try {
       // Check if API key is available
       if (!this.config.apiKey) {
+        console.warn(`⚠️ DeliveryService: ${this.config.serviceName} API key is not configured`);
         return {
           success: false,
           message: `${this.config.serviceName} API key is not configured`
@@ -231,13 +342,14 @@ export class DeliveryService {
       }
 
       if (this.partner === 'delhivery') {
+        console.log(`📮 DeliveryService: Fetching tracking from Delhivery API for ID: ${trackingId}`);
         return await this.getDelhiveryTrackingInfo(trackingId);
       }
       
       // For other partners, use mock data for now
-      console.log(`Getting tracking info from ${this.config.serviceName} for tracking ID ${trackingId}`);
+      console.log(`🔧 DeliveryService: Using mock tracking data for ${this.config.serviceName}, ID: ${trackingId}`);
       
-      return {
+      const mockData = {
         success: true,
         trackingId,
         status: 'in_transit',
@@ -258,8 +370,11 @@ export class DeliveryService {
         ],
         estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
       };
+      
+      console.log(`✅ DeliveryService: Mock tracking data returned for ID: ${trackingId}`);
+      return mockData;
     } catch (error) {
-      console.error(`Error getting tracking info from ${this.config.serviceName}:`, error);
+      console.error(`❌ DeliveryService: Error getting tracking info from ${this.config.serviceName}:`, error);
       return {
         success: false,
         message: `Failed to get tracking info from ${this.config.serviceName}`,
@@ -272,8 +387,17 @@ export class DeliveryService {
    * Get tracking information from Delhivery API
    */
   private async getDelhiveryTrackingInfo(waybill: string): Promise<any> {
+    console.log('\n🔍 ========== DELHIVERY TRACKING INFO ==========');
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    console.log(`📮 Getting tracking info for waybill: ${waybill}`);
+    
     try {
-      const response = await fetch(`${this.config.baseUrl}/v1/packages/json/?waybill=${waybill}`, {
+      const trackingUrl = `${this.config.baseUrl}/v1/packages/json/?waybill=${waybill}`;
+      console.log(`\n🌐 Sending request to Delhivery API...`);
+      console.log(`   - URL: ${trackingUrl}`);
+      console.log(`   - API Key: ***${this.config.apiKey.substring(this.config.apiKey.length - 8)}`);
+      
+      const response = await fetch(trackingUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Token ${this.config.apiKey}`,
@@ -281,8 +405,12 @@ export class DeliveryService {
         }
       });
 
+      console.log(`\n📡 Delhivery API Response:`);
+      console.log(`   - Status Code: ${response.status}`);
+      console.log(`   - Status Text: ${response.statusText}`);
+      
       const responseData = await response.json();
-      console.log('Delhivery Tracking Response:', responseData);
+      console.log('📦 Tracking Response Data:', JSON.stringify(responseData, null, 2));
 
       if (response.ok && responseData.ShipmentData?.length > 0) {
         const shipment = responseData.ShipmentData[0].Shipment;
@@ -308,7 +436,7 @@ export class DeliveryService {
           description: scan.Instructions || `Package ${scan.Scan}`
         }));
 
-        return {
+        const trackingResult = {
           success: true,
           trackingId: waybill,
           status: mappedStatus,
@@ -316,7 +444,21 @@ export class DeliveryService {
           updates: updates.reverse(), // Show latest first
           estimatedDelivery: shipment.ExpectedDeliveryDate ? new Date(shipment.ExpectedDeliveryDate) : null
         };
+        
+        console.log(`\n✅ ========== TRACKING INFO RETRIEVED ==========`);
+        console.log(`   - Waybill: ${waybill}`);
+        console.log(`   - Status: ${mappedStatus}`);
+        console.log(`   - Current Location: ${trackingResult.currentLocation}`);
+        console.log(`   - Updates Count: ${updates.length}`);
+        console.log(`   - Estimated Delivery: ${trackingResult.estimatedDelivery?.toLocaleDateString() || 'N/A'}`);
+        console.log(`🔍 ================================================\n`);
+        
+        return trackingResult;
       } else {
+        console.warn(`\n⚠️ ========== NO TRACKING DATA FOUND ==========`);
+        console.warn(`   - Waybill: ${waybill}`);
+        console.warn(`   - Reason: Invalid waybill or shipment not found`);
+        console.warn(`🔍 ================================================\n`);
         return {
           success: false,
           message: 'Tracking information not found',
@@ -324,7 +466,10 @@ export class DeliveryService {
         };
       }
     } catch (error) {
-      console.error('Error getting Delhivery tracking info:', error);
+      console.error('\n❌ ========== TRACKING INFO ERROR ==========');
+      console.error('Error details:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('🔍 ================================================\n');
       return {
         success: false,
         message: 'Failed to get tracking information from Delhivery',
@@ -378,14 +523,297 @@ export class DeliveryService {
    * Convert order to delivery request
    */
   static orderToDeliveryRequest(order: Order, user: any, items: any[]): DeliveryRequest {
-    // Parse shipping address (in real app, this might be a structured object or split fields)
+    // Parse shipping address
+    // Expected formats: 
+    // 1. "Street, City, State - Pincode"
+    // 2. "Street City, State - Pincode"
+    // 3. "Street, State - Pincode"
     const addressParts = order.shippingAddress.split(', ');
     
-    // Extract city, state, and pincode (extremely simplified; in real app would be proper fields)
-    const pincode = addressParts[addressParts.length - 1] || '400001';
-    const state = addressParts[addressParts.length - 2] || 'Maharashtra';
-    const city = addressParts[addressParts.length - 3] || 'Mumbai';
-    const streetAddress = addressParts.slice(0, addressParts.length - 3).join(', ') || order.shippingAddress;
+    console.log('📍 Parsing shipping address:', order.shippingAddress);
+    console.log('📍 Address parts:', addressParts);
+    
+    // Extract pincode, state, and city with better parsing
+    let pincode = '400001'; // Default
+    let state = 'Maharashtra'; // Default
+    let city = 'Mumbai'; // Default
+    let streetAddress = order.shippingAddress;
+    
+    // Handle format: "Street City, State - Pincode" (2 parts)
+    if (addressParts.length === 2) {
+      const lastPart = addressParts[1]; // "State - Pincode"
+      
+      if (lastPart.includes(' - ')) {
+        const [statePart, pincodePart] = lastPart.split(' - ');
+        state = statePart.trim();
+        pincode = pincodePart.trim();
+        
+        // First part contains "Street City" - extract city as last word
+        const firstPart = addressParts[0].trim();
+        const firstPartWords = firstPart.split(' ');
+        
+        if (firstPartWords.length >= 2) {
+          // Last word is likely the city
+          city = firstPartWords[firstPartWords.length - 1];
+          // Everything else is the street address
+          streetAddress = firstPartWords.slice(0, -1).join(' ');
+        } else {
+          // If only one word, use it as both street and city
+          city = firstPart;
+          streetAddress = firstPart;
+        }
+        
+        console.log('📍 Parsed format: "Street City, State - Pincode"');
+      }
+    }
+    // Handle format: "Street, City, State - Pincode" (3+ parts)
+    else if (addressParts.length >= 3) {
+      // Last part usually contains "State - Pincode"
+      const lastPart = addressParts[addressParts.length - 1];
+      
+      // Extract pincode and state from "State - Pincode" format
+      if (lastPart.includes(' - ')) {
+        const [statePart, pincodePart] = lastPart.split(' - ');
+        state = statePart.trim();
+        pincode = pincodePart.trim();
+        
+        // City is the second-to-last part (before "State - Pincode")
+        // But it might contain multiple parts like "Sunny Residency,begumpet Hyderabaad"
+        const cityPart = addressParts[addressParts.length - 2]?.trim() || city;
+        
+        // Extract city name from complex strings
+        // Look for patterns like "something,cityname" or "something cityname"
+        let streetParts: string[] = [];
+        
+        if (cityPart.includes(',')) {
+          // Split by comma and take the last part as city
+          const citySubParts = cityPart.split(',');
+          const lastSubPart = citySubParts[citySubParts.length - 1].trim();
+          
+          // Extract city name from "begumpet Hyderabaad" -> "Hyderabaad"
+          const cityWords = lastSubPart.split(' ');
+          if (cityWords.length >= 2) {
+            city = cityWords[cityWords.length - 1]; // Last word is the city
+            // Add the area/locality to street address
+            const locality = cityWords.slice(0, -1).join(' ');
+            if (locality) {
+              streetParts.push(locality);
+            }
+          } else {
+            city = lastSubPart;
+          }
+          
+          // Add the parts before the city to street address
+          const beforeCity = citySubParts.slice(0, -1).join(',');
+          if (beforeCity) {
+            streetParts.unshift(beforeCity);
+          }
+        } else {
+          // No comma, try to extract city from space-separated words
+          const cityWords = cityPart.split(' ');
+          if (cityWords.length >= 2) {
+            city = cityWords[cityWords.length - 1]; // Last word is the city
+            // Add the area/locality to street address
+            const locality = cityWords.slice(0, -1).join(' ');
+            if (locality) {
+              streetParts.push(locality);
+            }
+          } else {
+            city = cityPart;
+          }
+        }
+        
+        // Street address is everything before the last 2 parts + extracted locality
+        const baseStreet = addressParts.slice(0, addressParts.length - 2).join(', ').trim();
+        if (baseStreet) {
+          streetParts.unshift(baseStreet);
+        }
+        streetAddress = streetParts.join(', ') || order.shippingAddress;
+      } else if (/^\d{6}$/.test(lastPart.trim())) {
+        // If last part is just 6 digits, it's the pincode
+        pincode = lastPart.trim();
+        state = addressParts[addressParts.length - 2]?.trim() || state;
+        city = addressParts[addressParts.length - 3]?.trim() || city;
+        
+        // Street address is everything before the last 3 parts
+        streetAddress = addressParts.slice(0, addressParts.length - 3).join(', ').trim() || order.shippingAddress;
+      } else {
+        // Fallback: try to extract pincode from last part
+        pincode = lastPart.trim();
+        city = addressParts[addressParts.length - 2]?.trim() || city;
+        
+        // Street address is everything before the last 2 parts
+        streetAddress = addressParts.slice(0, addressParts.length - 2).join(', ').trim() || order.shippingAddress;
+      }
+    }
+    
+    // Ensure pincode is only digits (remove any non-numeric characters)
+    pincode = pincode.replace(/\D/g, '');
+    
+    // If pincode is not 6 digits, use default
+    if (!/^\d{6}$/.test(pincode)) {
+      console.warn(`⚠️ Invalid pincode extracted: "${pincode}", using default`);
+      pincode = '400001';
+    }
+    
+    // Validate and correct state names (handle common typos)
+    const stateCorrections: { [key: string]: string } = {
+      'telanganna': 'Telangana',
+      'telangana': 'Telangana',
+      'andhra pradesh': 'Andhra Pradesh',
+      'karnataka': 'Karnataka',
+      'tamil nadu': 'Tamil Nadu',
+      'maharashtra': 'Maharashtra',
+      'kerala': 'Kerala',
+      'gujarat': 'Gujarat',
+      'rajasthan': 'Rajasthan',
+      'west bengal': 'West Bengal',
+      'madhya pradesh': 'Madhya Pradesh',
+      'uttar pradesh': 'Uttar Pradesh',
+      'bihar': 'Bihar',
+      'odisha': 'Odisha',
+      'punjab': 'Punjab',
+      'haryana': 'Haryana',
+      'jharkhand': 'Jharkhand',
+      'chhattisgarh': 'Chhattisgarh',
+      'assam': 'Assam',
+      'uttarakhand': 'Uttarakhand',
+      'himachal pradesh': 'Himachal Pradesh',
+      'goa': 'Goa',
+      'delhi': 'Delhi',
+      'new delhi': 'Delhi'
+    };
+    
+    const stateLower = state.toLowerCase();
+    if (stateCorrections[stateLower]) {
+      const originalState = state;
+      state = stateCorrections[stateLower];
+      if (originalState !== state) {
+        console.log(`📍 Corrected state: "${originalState}" → "${state}"`);
+      }
+    } else {
+      console.warn(`⚠️ Unknown state: "${state}" - Delhivery may reject this`);
+    }
+    
+    // Validate and correct city names (handle common typos)
+    const cityCorrections: { [key: string]: string } = {
+      'hyderabaad': 'Hyderabad',
+      'hyderabad': 'Hyderabad',
+      'bengaluru': 'Bangalore',
+      'bangalore': 'Bangalore',
+      'mumbai': 'Mumbai',
+      'delhi': 'Delhi',
+      'chennai': 'Chennai',
+      'kolkata': 'Kolkata',
+      'pune': 'Pune',
+      'ahmedabad': 'Ahmedabad',
+      'jaipur': 'Jaipur',
+      'lucknow': 'Lucknow',
+      'kanpur': 'Kanpur',
+      'nagpur': 'Nagpur',
+      'indore': 'Indore',
+      'thane': 'Thane',
+      'bhopal': 'Bhopal',
+      'visakhapatnam': 'Visakhapatnam',
+      'pimpri-chinchwad': 'Pimpri-Chinchwad',
+      'patna': 'Patna',
+      'vadodara': 'Vadodara',
+      'ghaziabad': 'Ghaziabad',
+      'ludhiana': 'Ludhiana',
+      'agra': 'Agra',
+      'nashik': 'Nashik',
+      'faridabad': 'Faridabad',
+      'meerut': 'Meerut',
+      'rajkot': 'Rajkot',
+      'kalyan-dombivali': 'Kalyan-Dombivali',
+      'vasai-virar': 'Vasai-Virar',
+      'varanasi': 'Varanasi',
+      'srinagar': 'Srinagar',
+      'aurangabad': 'Aurangabad',
+      'dhanbad': 'Dhanbad',
+      'amritsar': 'Amritsar',
+      'navi mumbai': 'Navi Mumbai',
+      'allahabad': 'Allahabad',
+      'ranchi': 'Ranchi',
+      'howrah': 'Howrah',
+      'coimbatore': 'Coimbatore',
+      'jabalpur': 'Jabalpur',
+      'gwalior': 'Gwalior',
+      'vijayawada': 'Vijayawada',
+      'jodhpur': 'Jodhpur',
+      'madurai': 'Madurai',
+      'raipur': 'Raipur',
+      'kota': 'Kota',
+      'guwahati': 'Guwahati',
+      'chandigarh': 'Chandigarh',
+      'solapur': 'Solapur',
+      'hubli-dharwad': 'Hubli-Dharwad',
+      'bareilly': 'Bareilly',
+      'moradabad': 'Moradabad',
+      'mysore': 'Mysore',
+      'gurgaon': 'Gurgaon',
+      'aligarh': 'Aligarh',
+      'jalandhar': 'Jalandhar',
+      'tiruchirappalli': 'Tiruchirappalli',
+      'bhubaneswar': 'Bhubaneswar',
+      'salem': 'Salem',
+      'warangal': 'Warangal',
+      'mira-bhayandar': 'Mira-Bhayandar',
+      'thiruvananthapuram': 'Thiruvananthapuram',
+      'bhiwandi': 'Bhiwandi',
+      'saharanpur': 'Saharanpur',
+      'guntur': 'Guntur',
+      'amravati': 'Amravati',
+      'bikaner': 'Bikaner',
+      'noida': 'Noida',
+      'jamshedpur': 'Jamshedpur',
+      'bhilai nagar': 'Bhilai Nagar',
+      'cuttack': 'Cuttack',
+      'firozabad': 'Firozabad',
+      'kochi': 'Kochi',
+      'bhavnagar': 'Bhavnagar',
+      'dehradun': 'Dehradun',
+      'durgapur': 'Durgapur',
+      'asansol': 'Asansol',
+      'nanded-waghala': 'Nanded-Waghala',
+      'kolapur': 'Kolapur',
+      'ajmer': 'Ajmer',
+      'gulbarga': 'Gulbarga',
+      'jamnagar': 'Jamnagar',
+      'ujjain': 'Ujjain',
+      'loni': 'Loni',
+      'siliguri': 'Siliguri',
+      'jhansi': 'Jhansi',
+      'ulhasnagar': 'Ulhasnagar',
+      'nellore': 'Nellore',
+      'jammu': 'Jammu',
+      'sangli-miraj & kupwad': 'Sangli-Miraj & Kupwad',
+      'mangalore': 'Mangalore',
+      'erode': 'Erode',
+      'belgaum': 'Belgaum',
+      'ambattur': 'Ambattur',
+      'tirunelveli': 'Tirunelveli',
+      'malegaon': 'Malegaon',
+      'gaya': 'Gaya',
+      'jalgaon': 'Jalgaon',
+      'udaipur': 'Udaipur',
+      'maheshtala': 'Maheshtala'
+    };
+    
+    const cityLower = city.toLowerCase();
+    if (cityCorrections[cityLower]) {
+      const originalCity = city;
+      city = cityCorrections[cityLower];
+      if (originalCity !== city) {
+        console.log(`📍 Corrected city: "${originalCity}" → "${city}"`);
+      }
+    }
+    
+    console.log('📍 Parsed address:');
+    console.log('   - Street:', streetAddress);
+    console.log('   - City:', city);
+    console.log('   - State:', state);
+    console.log('   - Pincode:', pincode);
     
     // Calculate total weight (mocked for now)
     const weight = items.reduce((total, item) => total + (item.quantity * 0.5), 0.5);
@@ -408,6 +836,126 @@ export class DeliveryService {
         price: item.price
       }))
     };
+  }
+
+  /**
+   * Register a warehouse/pickup location with Delhivery
+   * This is required before creating shipments
+   */
+  async registerWarehouse(warehouseData: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    contactPerson: string;
+    contactPhone: string;
+    contactEmail: string;
+  }): Promise<DeliveryResponse> {
+    console.log('\n🏭 ========== DELHIVERY WAREHOUSE REGISTRATION ==========');
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    console.log('📦 Registering warehouse with Delhivery');
+    console.log('📋 Warehouse Details:');
+    console.log('   - Name:', warehouseData.name);
+    console.log('   - Address:', warehouseData.address);
+    console.log('   - City:', warehouseData.city);
+    console.log('   - State:', warehouseData.state);
+    console.log('   - Pincode:', warehouseData.pincode);
+    console.log('   - Contact:', warehouseData.contactPerson);
+    console.log('   - Phone:', warehouseData.contactPhone);
+    console.log('   - Email:', warehouseData.contactEmail);
+
+    try {
+      // Check if API key is available
+      if (!this.config.apiKey) {
+        console.error('❌ Delhivery API key is not configured');
+        return {
+          success: false,
+          message: 'Delhivery API key is not configured',
+          errors: ['API key missing']
+        };
+      }
+
+      // Prepare warehouse registration data
+      const registrationData = {
+        name: warehouseData.name,
+        address: warehouseData.address,
+        city: warehouseData.city,
+        state: warehouseData.state,
+        pin: warehouseData.pincode,
+        country: 'India',
+        phone: warehouseData.contactPhone,
+        email: warehouseData.contactEmail,
+        registered_name: warehouseData.contactPerson,
+        return_address: warehouseData.address,
+        return_city: warehouseData.city,
+        return_state: warehouseData.state,
+        return_pin: warehouseData.pincode,
+        return_country: 'India'
+      };
+
+      console.log('\n📦 Warehouse Registration Data:', JSON.stringify(registrationData, null, 2));
+
+      // Delhivery warehouse creation API endpoint
+      const warehouseUrl = `${this.config.baseUrl}/backend/clientwarehouse/create/`;
+      
+      console.log('\n🌐 Sending request to Delhivery Warehouse API...');
+      console.log('   - URL:', warehouseUrl);
+      console.log('   - API Key: ***' + this.config.apiKey.substring(this.config.apiKey.length - 8));
+
+      const response = await fetch(warehouseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${this.config.apiKey}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(registrationData)
+      });
+
+      console.log('\n📡 Delhivery API Response:');
+      console.log('   - Status Code:', response.status);
+      console.log('   - Status Text:', response.statusText);
+
+      const responseData = await response.json();
+      console.log('📦 Response Data:', JSON.stringify(responseData, null, 2));
+
+      if (response.ok && responseData.success !== false) {
+        console.log('\n✅ ========== WAREHOUSE REGISTERED SUCCESSFULLY ==========');
+        console.log('   - Warehouse Name:', warehouseData.name);
+        console.log('   - Status: Pending Verification');
+        console.log('   - Note: Delhivery will verify this warehouse within 24-48 hours');
+        console.log('🏭 =========================================================\n');
+
+        return {
+          success: true,
+          message: 'Warehouse registered successfully. Awaiting Delhivery verification (24-48 hours).',
+          trackingId: warehouseData.name
+        };
+      } else {
+        console.error('\n❌ ========== WAREHOUSE REGISTRATION FAILED ==========');
+        console.error('   - Message:', responseData.message || 'Unknown error');
+        console.error('   - Errors:', responseData.errors || ['Unknown error from Delhivery API']);
+        console.error('🏭 ======================================================\n');
+
+        return {
+          success: false,
+          message: responseData.message || 'Failed to register warehouse',
+          errors: responseData.errors || ['Unknown error from Delhivery API']
+        };
+      }
+    } catch (error) {
+      console.error('\n❌ ========== WAREHOUSE REGISTRATION ERROR ==========');
+      console.error('Error details:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('🏭 =====================================================\n');
+
+      return {
+        success: false,
+        message: 'Failed to register warehouse with Delhivery',
+        errors: [error instanceof Error ? error.message : 'Unknown error']
+      };
+    }
   }
 }
 

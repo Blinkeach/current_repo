@@ -33,11 +33,29 @@ export async function hashPassword(password: string) {
   return `${buf.toString('hex')}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+async function comparePasswords(supplied: string, stored: string | null | undefined) {
+  // Handle null, undefined, or invalid password format
+  if (!stored || typeof stored !== 'string' || !stored.includes('.')) {
+    console.log('⚠️ Invalid password format in database');
+    return false;
+  }
+  
   const [hashed, salt] = stored.split('.');
-  const hashedBuf = Buffer.from(hashed, 'hex');
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  
+  // Validate that both parts exist
+  if (!hashed || !salt) {
+    console.log('⚠️ Password missing hash or salt component');
+    return false;
+  }
+  
+  try {
+    const hashedBuf = Buffer.from(hashed, 'hex');
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.log('⚠️ Error comparing passwords:', error);
+    return false;
+  }
 }
 
 function generateOTP() {
@@ -334,14 +352,29 @@ export function setupAuth(app: Express) {
     try {
       const { email, username, password, fullName } = req.body;
 
+      console.log('\n🔐 ═══════════════════════════════════════════════════════');
+      console.log('📝 NEW USER REGISTRATION ATTEMPT');
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('📧 Email:', email);
+      console.log('👤 Username:', username);
+      console.log('📛 Full Name:', fullName);
+      console.log('🕐 Timestamp:', new Date().toLocaleString());
+      console.log('═══════════════════════════════════════════════════════\n');
+
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
+        console.log('❌ REGISTRATION FAILED: Email already in use');
+        console.log('📧 Duplicate Email:', email);
+        console.log('═══════════════════════════════════════════════════════\n');
         return res.status(400).json({ error: 'Email already in use' });
       }
 
       const existingUsername = await storage.getUserByUsername(username);
       if (existingUsername) {
+        console.log('❌ REGISTRATION FAILED: Username already taken');
+        console.log('👤 Duplicate Username:', username);
+        console.log('═══════════════════════════════════════════════════════\n');
         return res.status(400).json({ error: 'Username already taken' });
       }
 
@@ -354,38 +387,86 @@ export function setupAuth(app: Express) {
         emailVerified: false, // User needs to verify email separately
       });
 
+      console.log('✅ USER CREATED SUCCESSFULLY!');
+      console.log('🆔 User ID:', user.id);
+      console.log('👤 Username:', user.username);
+      console.log('📧 Email:', user.email);
+      console.log('📛 Full Name:', user.fullName);
+      console.log('🔓 Email Verified:', user.emailVerified);
+
       // Auto login after registration
       req.login(sanitizeUser(user), (err) => {
         if (err) {
+          console.log('❌ AUTO-LOGIN FAILED after registration');
+          console.log('⚠️ Error:', err);
+          console.log('═══════════════════════════════════════════════════════\n');
           return res.status(500).json({ error: 'Login failed after registration' });
         }
         
         const token = generateToken(req.user!);
+        console.log('🎉 REGISTRATION & AUTO-LOGIN SUCCESSFUL!');
+        console.log('🔑 JWT Token Generated');
+        console.log('🚀 User Session Created');
+        console.log('═══════════════════════════════════════════════════════\n');
+        
         res.status(201).json({
           user: req.user,
           token,
         });
       });
     } catch (error) {
+      console.log('💥 REGISTRATION ERROR!');
+      console.log('⚠️ Error:', error);
+      console.log('═══════════════════════════════════════════════════════\n');
       res.status(500).json({ error: 'Registration failed' });
     }
   });
 
   app.post('/api/auth/login', (req, res, next) => {
+    const { email } = req.body;
+    
+    console.log('\n🔐 ═══════════════════════════════════════════════════════');
+    console.log('🔑 USER LOGIN ATTEMPT');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('📧 Email:', email);
+    console.log('🕐 Timestamp:', new Date().toLocaleString());
+    console.log('🌐 IP Address:', req.ip || req.connection.remoteAddress);
+    console.log('═══════════════════════════════════════════════════════\n');
+    
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) {
+        console.log('💥 AUTHENTICATION ERROR!');
+        console.log('⚠️ Error:', err);
+        console.log('═══════════════════════════════════════════════════════\n');
         return res.status(500).json({ error: 'Authentication error' });
       }
       if (!user) {
+        console.log('❌ LOGIN FAILED: Invalid credentials');
+        console.log('📧 Email:', email);
+        console.log('📝 Reason:', info?.message || 'Invalid credentials');
+        console.log('═══════════════════════════════════════════════════════\n');
         return res.status(401).json({ error: info?.message || 'Invalid credentials' });
       }
       
       req.login(user, (err: any) => {
         if (err) {
+          console.log('❌ LOGIN SESSION CREATION FAILED');
+          console.log('⚠️ Error:', err);
+          console.log('═══════════════════════════════════════════════════════\n');
           return res.status(500).json({ error: 'Login failed' });
         }
         
         const token = generateToken(user);
+        console.log('✅ LOGIN SUCCESSFUL!');
+        console.log('🆔 User ID:', user.id);
+        console.log('👤 Username:', user.username);
+        console.log('📧 Email:', user.email);
+        console.log('📛 Full Name:', user.fullName);
+        console.log('👑 Is Admin:', user.isAdmin ? 'Yes' : 'No');
+        console.log('🔑 JWT Token Generated');
+        console.log('🚀 User Session Created');
+        console.log('═══════════════════════════════════════════════════════\n');
+        
         res.json({
           user,
           token,
@@ -395,39 +476,140 @@ export function setupAuth(app: Express) {
   });
 
   app.post('/api/auth/logout', (req, res) => {
+    const user = req.user;
+    
+    console.log('\n🔐 ═══════════════════════════════════════════════════════');
+    console.log('🚪 USER LOGOUT');
+    console.log('═══════════════════════════════════════════════════════');
+    if (user) {
+      console.log('🆔 User ID:', user.id);
+      console.log('👤 Username:', user.username);
+      console.log('📧 Email:', user.email);
+    }
+    console.log('🕐 Timestamp:', new Date().toLocaleString());
+    console.log('═══════════════════════════════════════════════════════\n');
+    
     req.logout((err) => {
       if (err) {
+        console.log('❌ LOGOUT FAILED');
+        console.log('⚠️ Error:', err);
+        console.log('═══════════════════════════════════════════════════════\n');
         return res.status(500).json({ error: 'Logout failed' });
       }
+      console.log('✅ LOGOUT SUCCESSFUL!');
+      console.log('🔓 Session Destroyed');
+      console.log('═══════════════════════════════════════════════════════\n');
       res.json({ message: 'Logged out successfully' });
     });
   });
 
-  // Google auth routes
-  app.get('/api/auth/google', passport.authenticate('google'));
-  
-  app.get(
-    '/api/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => {
-      const token = generateToken(req.user!);
-      // Redirect to frontend with token
-      res.redirect(`/auth/success?token=${token}`);
-    }
-  );
+  // Check if social auth providers are configured
+  const isGoogleConfigured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const isFacebookConfigured = !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET);
 
-  // Facebook auth routes
-  app.get('/api/auth/facebook', passport.authenticate('facebook', { scope: ['email'] }));
-  
-  app.get(
-    '/api/auth/facebook/callback',
-    passport.authenticate('facebook', { failureRedirect: '/login' }),
-    (req, res) => {
-      const token = generateToken(req.user!);
-      // Redirect to frontend with token
-      res.redirect(`/auth/success?token=${token}`);
-    }
-  );
+  // Log OAuth configuration status
+  console.log('\n🔐 ═══════════════════════════════════════════════════════');
+  console.log('📱 SOCIAL AUTHENTICATION CONFIGURATION');
+  console.log('═══════════════════════════════════════════════════════');
+  console.log('🔵 Google OAuth:', isGoogleConfigured ? '✅ Configured' : '❌ Not Configured');
+  console.log('🔵 Facebook OAuth:', isFacebookConfigured ? '✅ Configured' : '❌ Not Configured');
+  if (!isGoogleConfigured && !isFacebookConfigured) {
+    console.log('\n⚠️  Social login is disabled. To enable:');
+    console.log('   1. Set up OAuth apps in Google/Facebook developer console');
+    console.log('   2. Add credentials to .env file');
+    console.log('   3. See SOCIAL_AUTH_SETUP_GUIDE.md for instructions');
+  }
+  console.log('═══════════════════════════════════════════════════════\n');
+
+  // API endpoint to check social auth configuration
+  app.get('/api/auth/social-config', (req, res) => {
+    res.json({
+      google: isGoogleConfigured,
+      facebook: isFacebookConfigured
+    });
+  });
+
+  // Google auth routes (only if configured)
+  if (isGoogleConfigured) {
+    app.get('/api/auth/google', (req, res, next) => {
+      console.log('\n🔐 ═══════════════════════════════════════════════════════');
+      console.log('🔑 GOOGLE OAUTH LOGIN INITIATED');
+      console.log('═══════════════════════════════════════════════════════\n');
+      passport.authenticate('google')(req, res, next);
+    });
+    
+    app.get(
+      '/api/auth/google/callback',
+      passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
+      (req, res) => {
+        console.log('\n🔐 ═══════════════════════════════════════════════════════');
+        console.log('🔑 GOOGLE OAUTH LOGIN SUCCESSFUL');
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('🆔 User ID:', req.user?.id);
+        console.log('👤 Username:', req.user?.username);
+        console.log('📧 Email:', req.user?.email);
+        console.log('📛 Full Name:', req.user?.fullName);
+        console.log('🌐 Provider: Google');
+        console.log('🕐 Timestamp:', new Date().toLocaleString());
+        console.log('═══════════════════════════════════════════════════════\n');
+        
+        const token = generateToken(req.user!);
+        // Redirect to frontend with token
+        res.redirect(`/auth/success?token=${token}`);
+      }
+    );
+  } else {
+    // Fallback routes when Google auth is not configured
+    app.get('/api/auth/google', (req, res) => {
+      console.log('⚠️ Google OAuth not configured - redirecting to login');
+      res.redirect('/login?error=google_not_configured');
+    });
+    
+    app.get('/api/auth/google/callback', (req, res) => {
+      res.redirect('/login?error=google_not_configured');
+    });
+  }
+
+  // Facebook auth routes (only if configured)
+  if (isFacebookConfigured) {
+    app.get('/api/auth/facebook', (req, res, next) => {
+      console.log('\n🔐 ═══════════════════════════════════════════════════════');
+      console.log('🔑 FACEBOOK OAUTH LOGIN INITIATED');
+      console.log('═══════════════════════════════════════════════════════\n');
+      passport.authenticate('facebook', { scope: ['email'] })(req, res, next);
+    });
+    
+    app.get(
+      '/api/auth/facebook/callback',
+      passport.authenticate('facebook', { failureRedirect: '/login?error=facebook_auth_failed' }),
+      (req, res) => {
+        console.log('\n🔐 ═══════════════════════════════════════════════════════');
+        console.log('🔑 FACEBOOK OAUTH LOGIN SUCCESSFUL');
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('🆔 User ID:', req.user?.id);
+        console.log('👤 Username:', req.user?.username);
+        console.log('📧 Email:', req.user?.email);
+        console.log('📛 Full Name:', req.user?.fullName);
+        console.log('🌐 Provider: Facebook');
+        console.log('🕐 Timestamp:', new Date().toLocaleString());
+        console.log('═══════════════════════════════════════════════════════\n');
+        
+        const token = generateToken(req.user!);
+        // Redirect to frontend with token
+        res.redirect(`/auth/success?token=${token}`);
+      }
+    );
+  } else {
+    // Fallback routes when Facebook auth is not configured
+    app.get('/api/auth/facebook', (req, res) => {
+      console.log('⚠️ Facebook OAuth not configured - redirecting to login');
+      res.redirect('/login?error=facebook_not_configured');
+    });
+    
+    app.get('/api/auth/facebook/callback', (req, res) => {
+      res.redirect('/login?error=facebook_not_configured');
+    });
+  }
 
   // OTP routes for Gmail verification
   app.post('/api/auth/send-otp', async (req, res) => {

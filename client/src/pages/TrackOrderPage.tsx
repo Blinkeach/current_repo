@@ -64,9 +64,12 @@ const TrackOrderPage: React.FC = () => {
     }
   }, [isAuthenticated, toast, setLocation]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔍 TrackOrderPage: Form submitted with order number:', orderNumber);
+    
     if (!orderNumber.trim()) {
+      console.warn('⚠️ TrackOrderPage: Empty order number submitted');
       toast({
         title: "Error",
         description: "Please enter a valid order number",
@@ -76,38 +79,45 @@ const TrackOrderPage: React.FC = () => {
     }
 
     setIsLoading(true);
+    console.log('🔄 TrackOrderPage: Fetching order details for order:', orderNumber);
 
-    // Simulate API call to get order tracking information
-    setTimeout(() => {
-      // This is a placeholder, in a real app, this would be an actual API call
-      // const response = await fetch(\`/api/orders/${orderNumber}/track\`);
-      // const data = await response.json();
+    try {
+      // Fetch order details from API
+      const response = await fetch(`/api/orders/${orderNumber}`);
+      console.log('📡 TrackOrderPage: API response status:', response.status);
       
-      // Mock data for demonstration
-      const mockData: OrderTracking = {
-        orderId: orderNumber,
-        trackingId: 'TRK' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'),
-        carrier: 'Delhivery Express',
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN'),
-        currentStatus: 'shipped',
-        timeline: [
-          {
-            status: 'processing',
-            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString('en-IN'),
-            description: 'Order confirmed and payment received'
-          },
-          {
-            status: 'shipped',
-            date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleString('en-IN'),
-            location: 'Regional Sorting Facility, Mumbai',
-            description: 'Package has been shipped and is in transit'
-          }
-        ]
-      };
-
-      setOrderData(mockData);
+      if (!response.ok) {
+        console.error('❌ TrackOrderPage: Failed to fetch order, status:', response.status);
+        throw new Error('Order not found');
+      }
+      
+      const orderData = await response.json();
+      console.log('✅ TrackOrderPage: Order data received:', orderData);
+      
+      if (!orderData.trackingId) {
+        console.warn('⚠️ TrackOrderPage: Order has no tracking ID');
+        toast({
+          title: "No Tracking Information",
+          description: "This order doesn't have tracking information yet. Please check back later.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Redirect to tracking page with the tracking ID
+      console.log('🚀 TrackOrderPage: Redirecting to tracking page with ID:', orderData.trackingId);
+      setLocation(`/tracking?id=${orderData.trackingId}`);
+      
+    } catch (error) {
+      console.error('❌ TrackOrderPage: Error fetching order:', error);
+      toast({
+        title: "Error",
+        description: "Order not found. Please check your order number and try again.",
+        variant: "destructive",
+      });
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   // Calculate progress percentage based on current status

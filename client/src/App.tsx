@@ -108,9 +108,9 @@ function MainLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
       <Header />
-      <main className="flex-grow">
+      <main className="flex-grow w-full">
         <PageTransition transitionKey={location}>
           {children}
         </PageTransition>
@@ -124,12 +124,12 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 function App() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   
-  // Simulate initial loading state
+  // Optimize initial loading state - reduced from 2.5s to 1s for better performance
   useEffect(() => {
-    // Show the loader for at least 2 seconds for good UX
+    // Show the loader for minimal time for better perceived performance
     const timer = setTimeout(() => {
       setIsInitialLoading(false);
-    }, 2500);
+    }, 1000);
     
     return () => clearTimeout(timer);
   }, []);

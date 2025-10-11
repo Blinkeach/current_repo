@@ -3,14 +3,15 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import multer from "multer";
+import { r2StorageService } from "../r2Storage";
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists (for fallback)
 const uploadDir = path.join(process.cwd(), "public", "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Define multer storage
+// Define multer storage (using memory storage for R2 upload)
 const storage = multer.memoryStorage();
 
 // Create multer upload instance for images
@@ -78,14 +79,35 @@ const uploadController = {
         });
       }
 
-      const uniqueFilename = `${randomUUID()}${fileExtension}`;
-      const filePath = path.join(uploadDir, uniqueFilename);
-      
-      // Save the file
-      fs.writeFileSync(filePath, file.buffer);
-      
-      // Generate URL to the uploaded file
-      const fileUrl = `/uploads/${uniqueFilename}`;
+      let fileUrl: string;
+
+      // Try to upload to R2 first, fallback to local storage
+      if (r2StorageService.isAvailable()) {
+        try {
+          fileUrl = await r2StorageService.uploadImage(
+            file.buffer,
+            file.originalname,
+            file.mimetype
+          );
+          console.log('✅ [R2] Image uploaded successfully:', fileUrl);
+        } catch (r2Error) {
+          console.error('⚠️  [R2] Upload failed, using local storage fallback:', r2Error.message);
+          // Fallback to local storage
+          const uniqueFilename = `${randomUUID()}${fileExtension}`;
+          const filePath = path.join(uploadDir, uniqueFilename);
+          fs.writeFileSync(filePath, file.buffer);
+          fileUrl = `/uploads/${uniqueFilename}`;
+          console.log('✅ [LOCAL] Image saved to:', fileUrl);
+        }
+      } else {
+        // Use local storage if R2 is not configured
+        console.log('ℹ️  [R2] Not configured, using local storage');
+        const uniqueFilename = `${randomUUID()}${fileExtension}`;
+        const filePath = path.join(uploadDir, uniqueFilename);
+        fs.writeFileSync(filePath, file.buffer);
+        fileUrl = `/uploads/${uniqueFilename}`;
+        console.log('✅ [LOCAL] Image saved to:', fileUrl);
+      }
       
       res.status(201).json({ 
         message: "File uploaded successfully", 
@@ -115,15 +137,32 @@ const uploadController = {
           continue; // Skip invalid files
         }
 
-        // Generate a unique filename
-        const uniqueFilename = `${randomUUID()}${fileExtension}`;
-        const filePath = path.join(uploadDir, uniqueFilename);
-        
-        // Save the file
-        fs.writeFileSync(filePath, file.buffer);
-        
-        // Generate URL to the uploaded file
-        const fileUrl = `/uploads/${uniqueFilename}`;
+        let fileUrl: string;
+
+        // Try to upload to R2 first, fallback to local storage
+        if (r2StorageService.isAvailable()) {
+          try {
+            fileUrl = await r2StorageService.uploadProductImage(
+              file.buffer,
+              file.originalname,
+              file.mimetype
+            );
+            console.log('File uploaded to R2:', fileUrl);
+          } catch (r2Error) {
+            console.error('R2 upload failed, falling back to local storage:', r2Error);
+            // Fallback to local storage
+            const uniqueFilename = `${randomUUID()}${fileExtension}`;
+            const filePath = path.join(uploadDir, uniqueFilename);
+            fs.writeFileSync(filePath, file.buffer);
+            fileUrl = `/uploads/${uniqueFilename}`;
+          }
+        } else {
+          // Use local storage if R2 is not configured
+          const uniqueFilename = `${randomUUID()}${fileExtension}`;
+          const filePath = path.join(uploadDir, uniqueFilename);
+          fs.writeFileSync(filePath, file.buffer);
+          fileUrl = `/uploads/${uniqueFilename}`;
+        }
         
         uploadResults.push({
           originalName: file.originalname,
@@ -164,14 +203,33 @@ const uploadController = {
         });
       }
 
-      const uniqueFilename = `${randomUUID()}${fileExtension}`;
-      const filePath = path.join(uploadDir, uniqueFilename);
-      
-      // Save the file
-      fs.writeFileSync(filePath, file.buffer);
-      
-      // Generate URL to the uploaded file
-      const fileUrl = `/uploads/${uniqueFilename}`;
+      let fileUrl: string;
+
+      // Try to upload to R2 first, fallback to local storage
+      if (r2StorageService.isAvailable()) {
+        try {
+          fileUrl = await r2StorageService.uploadFile(
+            file.buffer,
+            'models',
+            file.originalname,
+            file.mimetype
+          );
+          console.log('3D model uploaded to R2:', fileUrl);
+        } catch (r2Error) {
+          console.error('R2 upload failed, falling back to local storage:', r2Error);
+          // Fallback to local storage
+          const uniqueFilename = `${randomUUID()}${fileExtension}`;
+          const filePath = path.join(uploadDir, uniqueFilename);
+          fs.writeFileSync(filePath, file.buffer);
+          fileUrl = `/uploads/${uniqueFilename}`;
+        }
+      } else {
+        // Use local storage if R2 is not configured
+        const uniqueFilename = `${randomUUID()}${fileExtension}`;
+        const filePath = path.join(uploadDir, uniqueFilename);
+        fs.writeFileSync(filePath, file.buffer);
+        fileUrl = `/uploads/${uniqueFilename}`;
+      }
       
       res.status(201).json({ 
         message: "3D model uploaded successfully", 

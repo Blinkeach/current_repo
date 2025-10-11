@@ -124,7 +124,7 @@ export default function ProductVariantSelector({
       recs.push({
         type: 'lowStock',
         title: 'Limited Stock Alert',
-        description: `Only ${lowStockSizes[0].stock} units left in ${lowStockSizes[0].name}`,
+        description: `🔥 Hurry! Almost gone in ${lowStockSizes[0].name}`,
         sizeName: lowStockSizes[0].name,
         icon: AlertTriangle
       });
@@ -169,8 +169,8 @@ export default function ProductVariantSelector({
     if (selectedSizeData) {
       const stock = selectedSizeData.stock;
       if (stock === 0) return { status: 'outOfStock', message: 'Out of stock' };
-      if (stock <= 3) return { status: 'lowStock', message: `Only ${stock} left` };
-      if (stock <= 10) return { status: 'moderate', message: `${stock} in stock` };
+      if (stock <= 5) return { status: 'lowStock', message: `🔥 Hurry! Only ${stock} left` };
+      if (stock <= 10) return { status: 'moderate', message: '⚡ Almost Gone - Limited Stock!' };
       return { status: 'inStock', message: 'In stock' };
     }
     
@@ -331,7 +331,7 @@ export default function ProductVariantSelector({
                     <div className="flex flex-col items-center">
                       <span className="font-medium">{size.name}</span>
                       {isLowStock && !isSelected && (
-                        <span className="text-xs text-orange-600">Only {stock} left</span>
+                        <span className="text-xs text-orange-600">🔥 Low Stock</span>
                       )}
                     </div>
                     
@@ -356,21 +356,22 @@ export default function ProductVariantSelector({
             })}
           </div>
           
-          {/* Stock Information */}
-          {currentSize && (
+          {/* Stock Information - Only show if low stock */}
+          {currentSize && getStockForSize(currentSize) <= 10 && getStockForSize(currentSize) > 0 && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               className="mt-3"
             >
-              <Card className="bg-gray-50 border-0">
+              <Card className="bg-orange-50 border-orange-200">
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Available stock:</span>
-                    <Badge variant={getStockForSize(currentSize) > 5 ? 'default' : 'destructive'}>
-                      {getStockForSize(currentSize)} units
-                    </Badge>
+                    <span className="text-orange-700 font-medium">
+                      {getStockForSize(currentSize) <= 5 
+                        ? `🔥 Hurry! Only ${getStockForSize(currentSize)} left` 
+                        : '⚡ Almost Gone - Limited Stock!'}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

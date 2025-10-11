@@ -257,7 +257,16 @@ const productController = {
         return res.status(400).json({ message: "Invalid product ID" });
       }
       
-      const { variants, ...productData } = req.body;
+      const { variants, colorSizeCombinations, ...productData } = req.body;
+      
+      // Debug logging
+      console.log("=== UPDATE PRODUCT DEBUG ===");
+      console.log("Product ID:", id);
+      console.log("colorSizeCombinations received:", JSON.stringify(colorSizeCombinations, null, 2));
+      console.log("variants received:", JSON.stringify(variants, null, 2));
+      console.log("colorSizeCombinations type:", typeof colorSizeCombinations);
+      console.log("colorSizeCombinations is array:", Array.isArray(colorSizeCombinations));
+      console.log("colorSizeCombinations length:", colorSizeCombinations?.length);
       
       // Update the main product
       const updatedProduct = await storage.updateProduct(id, productData);
@@ -266,8 +275,39 @@ const productController = {
         return res.status(404).json({ message: "Product not found" });
       }
       
-      // Handle variants if provided
-      if (variants && Array.isArray(variants)) {
+      // Handle colorSizeCombinations (new format from frontend)
+      if (colorSizeCombinations && Array.isArray(colorSizeCombinations) && colorSizeCombinations.length > 0) {
+        console.log("Processing colorSizeCombinations...");
+        
+        // Delete existing variants for this product
+        const deleteResult = await storage.deleteProductVariants(id);
+        console.log("Deleted existing variants, result:", deleteResult);
+        
+        // Create new variants from colorSizeCombinations
+        let variantCount = 0;
+        for (const combination of colorSizeCombinations) {
+          console.log("Processing color combination:", combination.color);
+          for (const size of combination.sizes || []) {
+            const newVariant = await storage.createProductVariant({
+              productId: id,
+              colorName: combination.color,
+              colorValue: combination.colorValue,
+              sizeName: size.size,
+              stock: size.stock,
+              images: [],
+              price: null,
+              sku: size.sku || null
+            });
+            variantCount++;
+            console.log("Created variant:", newVariant);
+          }
+        }
+        console.log(`Total variants created: ${variantCount}`);
+      }
+      // Handle legacy variants format
+      else if (variants && Array.isArray(variants) && variants.length > 0) {
+        console.log("Processing legacy variants format...");
+        
         // Delete existing variants for this product
         await storage.deleteProductVariants(id);
         
@@ -284,7 +324,13 @@ const productController = {
             sku: variant.sku || null
           });
         }
+      } else {
+        console.log("No color/size combinations or variants to process");
+        console.log("Deleting all existing variants for this product...");
+        await storage.deleteProductVariants(id);
       }
+      
+      console.log("=== UPDATE COMPLETE ===");
       
       res.json(updatedProduct);
     } catch (error) {

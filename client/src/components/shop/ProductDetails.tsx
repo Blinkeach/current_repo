@@ -438,12 +438,20 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId }) => {
               color="green"
             />
             <span className="mx-2 text-neutral-300">|</span>
-            {productWithStock.inStock ? (
+            {!productWithStock.inStock ? (
+              <span className="text-red-500 text-sm font-medium">Out of Stock</span>
+            ) : productWithStock.stock <= 5 ? (
+              <span className="text-orange-600 flex items-center text-sm font-bold animate-pulse">
+                <Clock className="h-4 w-4 mr-1" /> 🔥 Hurry! Only {productWithStock.stock} left
+              </span>
+            ) : productWithStock.stock <= 10 ? (
+              <span className="text-orange-500 flex items-center text-sm font-semibold">
+                <Clock className="h-4 w-4 mr-1" /> ⚡ Almost Gone - Limited Stock!
+              </span>
+            ) : (
               <span className="text-green-600 flex items-center text-sm">
                 <Check className="h-4 w-4 mr-1" /> In Stock
               </span>
-            ) : (
-              <span className="text-red-500 text-sm">Out of Stock</span>
             )}
           </div>
 
@@ -602,19 +610,25 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId }) => {
           <div className="mb-6">
             <p className="text-sm font-medium mb-2">{t("product.category")}: {productWithStock.category}</p>
             
-            {/* Show stock for selected combination */}
+            {/* Show stock for selected combination - Only if low stock or out of stock */}
             {(() => {
               if (product?.variants && selectedColor && selectedSize) {
                 const selectedVariant = product.variants.find((v: any) => 
                   v.colorName === selectedColor && v.sizeName === selectedSize
                 );
                 
-                if (selectedVariant) {
+                if (selectedVariant && selectedVariant.stock <= 10) {
                   return (
                     <div className="text-sm">
                       <span className="font-medium text-gray-700">Stock for {selectedColor} - {selectedSize}: </span>
-                      <span className={`font-bold ${selectedVariant.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {selectedVariant.stock > 0 ? `${selectedVariant.stock} available` : 'Out of stock'}
+                      <span className={`font-bold ${
+                        selectedVariant.stock === 0 ? 'text-red-600' : 
+                        selectedVariant.stock <= 5 ? 'text-orange-600' : 
+                        'text-orange-500'
+                      }`}>
+                        {selectedVariant.stock === 0 ? 'Out of stock' : 
+                         selectedVariant.stock <= 5 ? `🔥 Hurry! Only ${selectedVariant.stock} left` : 
+                         '⚡ Almost Gone - Limited Stock!'}
                       </span>
                     </div>
                   );

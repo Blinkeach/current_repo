@@ -17,7 +17,8 @@ import {
   FileText,
   ShoppingBag,
   RotateCcw,
-  MessageCircle
+  MessageCircle,
+  MapPin
 } from 'lucide-react';
 import ReturnRequestForm from '@/components/returns/ReturnRequestForm';
 import { format } from 'date-fns';
@@ -25,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 
 // Interfaces for order data
 interface OrderItem {
@@ -77,6 +79,7 @@ const OrdersPage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [returnOrderId, setReturnOrderId] = useState<number | null>(null);
   const [ordersWithReturnInfo, setOrdersWithReturnInfo] = useState<Order[]>([]);
@@ -140,6 +143,24 @@ const OrdersPage: React.FC = () => {
   const deliveredOrders = ordersWithReturnInfo?.filter(order => order.status.toLowerCase() === 'delivered') || [];
   const cancelledOrders = ordersWithReturnInfo?.filter(order => order.status.toLowerCase() === 'cancelled') || [];
   
+  // Track order
+  const trackOrder = (order: Order) => {
+    console.log('🔍 OrdersPage: Track order clicked for order:', order.id);
+    
+    if (!order.trackingId) {
+      console.warn('⚠️ OrdersPage: Order has no tracking ID:', order.id);
+      toast({
+        title: "No Tracking Information",
+        description: "This order doesn't have tracking information yet. Please check back later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('🚀 OrdersPage: Redirecting to tracking page with ID:', order.trackingId);
+    setLocation(`/tracking?id=${order.trackingId}`);
+  };
+
   // Download invoice
   const downloadInvoice = async (order: Order) => {
     try {
@@ -174,12 +195,25 @@ const OrdersPage: React.FC = () => {
 
       // If admin has uploaded invoice, download it
       try {
-        // Construct the server URL for invoice download
-        const invoiceUrl = order.invoiceUrl.startsWith('/') 
-          ? `${window.location.origin}${order.invoiceUrl}`
-          : order.invoiceUrl;
+        // Always proxy through server to avoid CORS issues with R2
+        let proxyUrl: string;
+        
+        if (order.invoiceUrl.includes('.r2.dev') || order.invoiceUrl.includes('r2.cloudflarestorage.com')) {
+          // Extract filename from R2 URL
+          const urlParts = order.invoiceUrl.split('/');
+          const filename = urlParts[urlParts.length - 1];
+          proxyUrl = `/api/local-upload/invoice/${filename.replace('.pdf', '')}`;
+        } else if (order.invoiceUrl.startsWith('/')) {
+          // Already a local path
+          proxyUrl = order.invoiceUrl;
+        } else {
+          // Fallback - use as-is
+          proxyUrl = order.invoiceUrl;
+        }
+        
+        console.log('📥 Downloading invoice via proxy:', proxyUrl);
           
-        const response = await fetch(invoiceUrl, {
+        const response = await fetch(proxyUrl, {
           credentials: 'include'
         });
         if (!response.ok) {
@@ -300,7 +334,18 @@ const OrdersPage: React.FC = () => {
             <CardTitle className="text-lg">Order #{order.id}</CardTitle>
             <CardDescription>Placed on {formatDate(order.createdAt)}</CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {order.trackingId && ['processing', 'shipped', 'delivered'].includes(order.status.toLowerCase()) && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1" 
+                onClick={() => trackOrder(order)}
+              >
+                <MapPin className="h-4 w-4" />
+                <span>Track Order</span>
+              </Button>
+            )}
             {order.status.toLowerCase() === 'delivered' && !order.returnRequest && (
               <Button 
                 variant="outline" 
@@ -548,11 +593,11 @@ const OrdersPage: React.FC = () => {
         <title>My Orders - Blinkeach</title>
       </Helmet>
       
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-6">
+      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        <div className="flex flex-col md:flex-row justify-between items-start mb-4 sm:mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">My Orders</h1>
-            <p className="text-neutral-500">View and track your order history</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">My Orders</h1>
+            <p className="text-sm sm:text-base text-neutral-500">View and track your order history</p>
           </div>
         </div>
 

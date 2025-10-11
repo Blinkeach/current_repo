@@ -67,12 +67,22 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           );
         }
 
-        // Create badge for out of stock products
+        // Create badge for stock status and discounts
         let badge = product.badge;
         if (product.stock <= 0) {
           badge = {
             text: 'Out of Stock',
             color: 'bg-red-500'
+          };
+        } else if (product.stock <= 5 && !badge) {
+          badge = {
+            text: `🔥 Only ${product.stock} Left!`,
+            color: 'bg-orange-600'
+          };
+        } else if (product.stock <= 10 && !badge) {
+          badge = {
+            text: '⚡ Almost Gone',
+            color: 'bg-orange-500'
           };
         } else if (discountPercentage && discountPercentage >= 40 && !badge) {
           badge = {

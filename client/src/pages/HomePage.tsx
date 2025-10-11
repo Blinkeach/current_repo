@@ -24,15 +24,19 @@ const HomePage: React.FC = () => {
         <meta name="description" content="Shop online for electronics, fashion, home appliances, and more. Great deals, fast delivery, easy returns. India's favorite shopping destination." />
       </Helmet>
 
-      <main className="min-h-screen">
-        {/* Hero Slider */}
-        <HeroSlider />
+      <main className="min-h-screen w-full overflow-x-hidden">
+        {/* Hero Slider - Fully Responsive */}
+        <div className="w-full">
+          <HeroSlider />
+        </div>
 
-        {/* Feature Categories */}
-        <CategorySection />
+        {/* Feature Categories - Responsive */}
+        <div className="w-full">
+          <CategorySection />
+        </div>
 
-        {/* Personalized Recommendations */}
-        <section className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+        {/* Personalized Recommendations - Responsive Container */}
+        <section className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
           <ProductRecommendations
             title={t('recommendations')}
             userId={user?.id}
@@ -42,20 +46,28 @@ const HomePage: React.FC = () => {
           />
         </section>
 
-        {/* All Products Section */}
-        <CategoryProductsSection />
+        {/* All Products Section - Responsive */}
+        <div className="w-full">
+          <CategoryProductsSection />
+        </div>
 
-        {/* Product Carousel (Deals + Top Selling) */}
-        <ProductCarousel />
+        {/* Product Carousel (Deals + Top Selling) - Responsive */}
+        <div className="w-full overflow-hidden">
+          <ProductCarousel />
+        </div>
 
-        {/* Promotional Banners */}
-        <PromotionalBanners />
+        {/* Promotional Banners - Responsive */}
+        <div className="w-full">
+          <PromotionalBanners />
+        </div>
         
-        {/* Recently Viewed Products */}
-        <RecentlyViewedSection />
+        {/* Recently Viewed Products - Responsive */}
+        <div className="w-full">
+          <RecentlyViewedSection />
+        </div>
 
-        {/* Fashion Recommendations */}
-        <section className="max-w-7xl mx-auto px-4 py-6 md:py-8 mb-8">
+        {/* Fashion Recommendations - Responsive Container */}
+        <section className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 mb-4 sm:mb-6 md:mb-8">
           <ProductRecommendations
             title="Fashion & Style"
             category="Fashion"
@@ -65,11 +77,15 @@ const HomePage: React.FC = () => {
           />
         </section>
 
-        {/* Features */}
-        <FeaturesSection />
+        {/* Features - Responsive */}
+        <div className="w-full">
+          <FeaturesSection />
+        </div>
 
-        {/* App Download Banner */}
-        <AppDownloadBanner />
+        {/* App Download Banner - Responsive */}
+        <div className="w-full">
+          <AppDownloadBanner />
+        </div>
       </main>
     </>
   );

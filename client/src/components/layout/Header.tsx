@@ -117,20 +117,20 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md">
+    <header className="sticky top-0 z-50 bg-white shadow-md gpu-accelerated">
       <div className="max-w-7xl mx-auto">
-        {/* Top bar */}
-        {/* <div className="bg-secondary p-1 flex justify-between text-white text-xs px-4 md:px-6">
-          <p className="hidden sm:block">
+        {/* Top bar with brand gradient */}
+        <div className="bg-brand-gradient p-1.5 flex justify-between text-white text-xs px-4 md:px-6">
+          <p className="hidden sm:block font-medium">
             {t("common.welcome")} - {t("home.favorite_shopping")}
           </p>
-          <div className="flex space-x-4">
-            <a href="#" className="hover:underline">
+          <div className="flex space-x-3 md:space-x-4">
+            <a href="#" className="hover:underline transition-all">
               {t("common.sell_on_blinkeach")}
             </a>
             <TransitionLink
               href="/help-faq"
-              className="hover:underline hidden sm:block"
+              className="hover:underline hidden sm:block transition-all"
             >
               {t("common.customer_service")}
             </TransitionLink>
@@ -142,34 +142,34 @@ const Header: React.FC = () => {
                   window.location.href = "/login?redirect=/orders";
                 }
               }}
-              className="hover:underline hidden sm:block text-white bg-transparent border-0 p-0 text-xs cursor-pointer"
+              className="hover:underline hidden sm:block text-white bg-transparent border-0 p-0 text-xs cursor-pointer transition-all"
             >
               {t("common.track_order")}
             </button>
           </div>
-        </div> */}
+        </div>
 
-        {/* Main header - Compact version */}
-        <div className="flex items-center justify-between py-2 px-4 md:px-6">
+        {/* Main header - Responsive and optimized */}
+        <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 md:px-6">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <TransitionLink href="/">
-              <div className="flex items-center">
+              <div className="flex items-center hover-lift">
                 <Logo size="small" />
               </div>
             </TransitionLink>
           </div>
 
-          {/* Search */}
-          <div className="hidden md:flex flex-1 mx-6">
+          {/* Search - Responsive */}
+          <div className="hidden md:flex flex-1 mx-4 lg:mx-6 max-w-2xl">
             <SearchWithAutocomplete 
-              className="w-full max-w-xl"
+              className="w-full"
               placeholder={t("common.search")}
             />
           </div>
 
-          {/* Nav Icons */}
-          <div className="flex items-center space-x-6">
+          {/* Nav Icons - Responsive spacing */}
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 lg:space-x-6">
             {/* Language Selector */}
             <LanguageSelectorWithFlags />
 
@@ -341,17 +341,17 @@ const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile search */}
-        <div className="md:hidden px-4 pb-3">
+        {/* Mobile search - Responsive */}
+        <div className="md:hidden px-3 sm:px-4 pb-2 sm:pb-3">
           <SearchWithAutocomplete 
             className="w-full"
             placeholder={t("common.search")}
           />
         </div>
 
-        {/* Categories Nav - Compact version */}
-        <nav className="bg-white border-t border-neutral-200 overflow-x-auto whitespace-nowrap">
-          <div className="flex px-4 py-1.5 space-x-6 md:justify-center text-xs md:text-sm">
+        {/* Categories Nav - Enhanced with brand colors and responsive */}
+        <nav className="bg-gradient-to-r from-white via-gray-50 to-white border-t border-neutral-200 overflow-x-auto no-scrollbar">
+          <div className="flex px-3 sm:px-4 py-2 space-x-4 sm:space-x-6 md:justify-center text-xs sm:text-sm">
             {categories.map((category, index) => (
               <TransitionLink
                 key={index}
@@ -360,9 +360,9 @@ const Header: React.FC = () => {
                   `/shop/${category.translationKey.split(".")[1].toLowerCase()}`
                 }
               >
-                <div className="flex flex-col items-center text-neutral-700 hover:text-secondary min-w-fit">
-                  <div className="text-base mb-0.5">{category.icon}</div>
-                  <span className="leading-tight">{t(category.translationKey)}</span>
+                <div className="flex flex-col items-center text-neutral-700 hover:text-primary smooth-transition min-w-fit group">
+                  <div className="text-base sm:text-lg mb-0.5 group-hover:scale-110 transition-transform">{category.icon}</div>
+                  <span className="leading-tight font-medium">{t(category.translationKey)}</span>
                 </div>
               </TransitionLink>
             ))}

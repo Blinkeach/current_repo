@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Heart, Star, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCart } from '@/lib/cart';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
 interface Product {
@@ -81,7 +80,7 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
     },
   });
 
-  // Auto-play functionality
+  // Auto-play functionality - Fixed for smooth continuous scrolling
   useEffect(() => {
     if (!isAutoPlaying || recommendations.length <= visibleItems) return;
 
@@ -90,7 +89,7 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
         const maxIndex = Math.max(0, recommendations.length - visibleItems);
         return prev >= maxIndex ? 0 : prev + 1;
       });
-    }, 4000);
+    }, 3500); // Smooth 3.5 second intervals
 
     return () => clearInterval(interval);
   }, [isAutoPlaying, recommendations.length, visibleItems]);
@@ -154,11 +153,11 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-4 sm:space-y-6 px-3 sm:px-4 md:px-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
         {recommendations.length > visibleItems && (
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -179,32 +178,22 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
         )}
       </div>
 
-      <div className="relative overflow-hidden">
-        <motion.div
-          className="flex gap-4"
-          animate={{
-            x: `-${currentIndex * (100 / visibleItems)}%`,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 30,
-          }}
+      <div className="relative overflow-hidden w-full">
+        <div 
+          className="flex gap-3 sm:gap-4 transition-transform duration-700 ease-in-out"
           style={{
+            transform: `translateX(-${currentIndex * (100 / visibleItems)}%)`,
             width: `${(recommendations.length / visibleItems) * 100}%`,
           }}
+          onMouseEnter={() => setIsAutoPlaying(false)}
+          onMouseLeave={() => setIsAutoPlaying(autoPlay)}
         >
-          <AnimatePresence>
-            {recommendations.map((product, index) => (
-              <motion.div
-                key={product.id}
-                className="flex-shrink-0"
-                style={{ width: `${100 / recommendations.length}%` }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.1 }}
-              >
+          {recommendations.map((product, index) => (
+            <div
+              key={product.id}
+              className="flex-shrink-0 px-1"
+              style={{ width: `${100 / recommendations.length}%` }}
+            >
                 <Card
                   className="group cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                   onClick={() => handleProductClick(product.id)}
@@ -282,10 +271,9 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
-          </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
 
       {/* Dots indicator for mobile */}

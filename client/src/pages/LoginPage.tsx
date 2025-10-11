@@ -52,6 +52,7 @@ const LoginPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('email');
   const [showOtpDialog, setShowOtpDialog] = useState(false);
   const [otpEmail, setOtpEmail] = useState('');
+  const [socialAuthConfig, setSocialAuthConfig] = useState({ google: false, facebook: false });
   
   // Check for token in URL (for social login redirects) or verified email from OTP
   useEffect(() => {
@@ -59,6 +60,7 @@ const LoginPage: React.FC = () => {
     const token = params.get('token');
     const email = params.get('email');
     const verified = params.get('verified');
+    const error = params.get('error');
     
     if (token) {
       // Store the token in localStorage
@@ -77,7 +79,49 @@ const LoginPage: React.FC = () => {
       // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+    
+    // Handle social auth errors
+    if (error) {
+      let errorMessage = 'Social login failed. Please try again.';
+      
+      if (error === 'google_not_configured') {
+        errorMessage = 'Google login is not configured. Please use email/password login or contact support.';
+      } else if (error === 'facebook_not_configured') {
+        errorMessage = 'Facebook login is not configured. Please use email/password login or contact support.';
+      } else if (error === 'google_auth_failed') {
+        errorMessage = 'Google authentication failed. Please try again or use email/password login.';
+      } else if (error === 'facebook_auth_failed') {
+        errorMessage = 'Facebook authentication failed. Please try again or use email/password login.';
+      }
+      
+      toast({
+        title: 'Authentication Error',
+        description: errorMessage,
+        variant: 'destructive',
+        duration: 5000
+      });
+      
+      // Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, [navigate, toast]);
+  
+  // Fetch social auth configuration
+  useEffect(() => {
+    const fetchSocialConfig = async () => {
+      try {
+        const response = await fetch('/api/auth/social-config');
+        if (response.ok) {
+          const config = await response.json();
+          setSocialAuthConfig(config);
+        }
+      } catch (error) {
+        console.error('Failed to fetch social auth config:', error);
+      }
+    };
+    
+    fetchSocialConfig();
+  }, []);
 
   // Initialize the form with default values
   const form = useForm<LoginFormValues>({
@@ -239,17 +283,17 @@ const LoginPage: React.FC = () => {
         <meta name="description" content={t('login.meta_description')} />
       </Helmet>
 
-      <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50 p-4">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-neutral-50 px-3 sm:px-4 py-6">
         <div className="w-full max-w-md">
-          <div className="mb-6 text-center">
-            <div className="flex justify-center mb-4">
+          <div className="mb-4 sm:mb-6 text-center">
+            <div className="flex justify-center mb-3 sm:mb-4">
               <Logo size="medium" />
             </div>
-            <h1 className="text-2xl font-bold text-neutral-800">{t('login.heading')}</h1>
-            <p className="text-neutral-600 mt-1">{t('login.welcome_message')}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-800">{t('login.heading')}</h1>
+            <p className="text-sm sm:text-base text-neutral-600 mt-1">{t('login.welcome_message')}</p>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
             <Tabs defaultValue="email" value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="email">{t('login.email_login')}</TabsTrigger>
@@ -346,14 +390,27 @@ const LoginPage: React.FC = () => {
               
               <TabsContent value="social">
                 <div className="space-y-4">
+                  {!socialAuthConfig.google && !socialAuthConfig.facebook && (
+                    <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm text-yellow-800">
+                        Social login is currently not configured. Please use email/password login.
+                      </p>
+                    </div>
+                  )}
+                  
                   <Button 
                     type="button" 
                     variant="outline" 
                     className="w-full"
                     onClick={handleGoogleLogin}
+                    disabled={!socialAuthConfig.google}
+                    title={!socialAuthConfig.google ? 'Google login is not configured' : 'Sign in with Google'}
                   >
                     <FcGoogle className="mr-2 h-5 w-5" />
                     {t('login.social.google')}
+                    {!socialAuthConfig.google && (
+                      <span className="ml-2 text-xs text-neutral-500">(Not configured)</span>
+                    )}
                   </Button>
                   
                   <Button 
@@ -361,9 +418,14 @@ const LoginPage: React.FC = () => {
                     variant="outline" 
                     className="w-full"
                     onClick={handleFacebookLogin}
+                    disabled={!socialAuthConfig.facebook}
+                    title={!socialAuthConfig.facebook ? 'Facebook login is not configured' : 'Sign in with Facebook'}
                   >
                     <SiFacebook className="mr-2 h-5 w-5 text-blue-600" />
                     {t('login.social.facebook')}
+                    {!socialAuthConfig.facebook && (
+                      <span className="ml-2 text-xs text-neutral-500">(Not configured)</span>
+                    )}
                   </Button>
                 </div>
               </TabsContent>

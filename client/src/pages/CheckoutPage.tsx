@@ -268,23 +268,23 @@ const CheckoutPage: React.FC = () => {
         <meta name="description" content="Complete your purchase securely with our easy checkout process." />
       </Helmet>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="mb-6">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+        <div className="mb-4 sm:mb-6">
           <Link href="/cart">
-            <a className="text-secondary hover:underline flex items-center text-sm">
-              <ChevronLeft className="h-4 w-4 mr-1" />
+            <a className="text-secondary hover:underline flex items-center text-xs sm:text-sm">
+              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               Back to Cart
             </a>
           </Link>
-          <h1 className="text-2xl font-bold text-neutral-800 mt-2">Checkout</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-neutral-800 mt-2">Checkout</h1>
         </div>
 
         {/* Authentication Warning */}
         {!isAuthenticated && !mockLoginEnabled && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-4 sm:mb-6">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Authentication Required</AlertTitle>
-            <AlertDescription>
+            <AlertTitle className="text-sm sm:text-base">Authentication Required</AlertTitle>
+            <AlertDescription className="text-xs sm:text-sm">
               You need to be logged in to complete checkout. For testing purposes, you can 
               <Button 
                 variant="link" 
@@ -307,22 +307,22 @@ const CheckoutPage: React.FC = () => {
         )}
         
         {/* Security Banner */}
-        <div className="bg-green-50 border border-green-100 rounded-lg p-3 mb-6 flex items-center">
-          <Lock className="h-5 w-5 text-green-600 mr-2 flex-shrink-0" />
-          <p className="text-green-800 text-sm">
+        <div className="bg-green-50 border border-green-100 rounded-lg p-2 sm:p-3 mb-4 sm:mb-6 flex items-center">
+          <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2 flex-shrink-0" />
+          <p className="text-green-800 text-xs sm:text-sm">
             <span className="font-medium">Secure Checkout:</span> Your payment information is encrypted and secure.
             {mockLoginEnabled && <span className="ml-1 bg-amber-200 text-amber-800 px-1 py-0.5 text-xs rounded">TEST MODE</span>}
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Checkout Form or Payment */}
-          <div className="flex-1 bg-white rounded-lg shadow-sm p-6">
+          <div className="flex-1 bg-white rounded-lg shadow-sm p-4 sm:p-6">
             {showPayment ? (
               <RazorpayPayment orderDetails={formData} />
             ) : (
               <>
-                <h2 className="text-lg font-semibold mb-4">Shipping & Payment Details</h2>
+                <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Shipping & Payment Details</h2>
                 <CheckoutForm 
                   onSubmit={handleCheckoutSubmit} 
                   isSubmitting={isSubmitting}
@@ -333,9 +333,9 @@ const CheckoutPage: React.FC = () => {
           </div>
 
           {/* Order Summary */}
-          <div className="lg:w-80">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+          <div className="w-full lg:w-80 lg:flex-shrink-0">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Order Summary</h2>
               
               {/* Show Buy Now item or regular cart items */}
               {isBuyNow && buyNowItem ? (

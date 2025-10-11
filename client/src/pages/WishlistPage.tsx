@@ -52,24 +52,24 @@ const WishlistPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
       <Helmet>
         <title>My Wishlist - Blinkeach</title>
         <meta name="description" content="View and manage your Blinkeach wishlist" />
       </Helmet>
 
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/" className="flex items-center gap-1">
-            <ArrowLeft className="h-4 w-4" />
+          <Link to="/" className="flex items-center gap-1 text-xs sm:text-sm">
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             Back to Home
           </Link>
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 mb-8">
-        <Heart className="h-6 w-6 text-primary" />
-        <h1 className="text-3xl font-bold">My Wishlist</h1>
+      <div className="flex items-center gap-2 mb-6 sm:mb-8">
+        <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">My Wishlist</h1>
       </div>
       
       {isLoading ? (
@@ -92,7 +92,7 @@ const WishlistPage: React.FC = () => {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {wishlistItems.map((item) => (
             <Card key={item.id} className="overflow-hidden">
               <div className="relative">
@@ -130,9 +130,19 @@ const WishlistPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm ${item.product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {item.product.stock > 0 ? 'In Stock' : 'Out of Stock'}
-                  </span>
+                  {item.product.stock === 0 ? (
+                    <span className="text-red-600 text-sm font-medium">Out of Stock</span>
+                  ) : item.product.stock <= 5 ? (
+                    <span className="text-orange-600 text-sm font-bold animate-pulse">
+                      🔥 Hurry! Only {item.product.stock} left
+                    </span>
+                  ) : item.product.stock <= 10 ? (
+                    <span className="text-orange-500 text-sm font-semibold">
+                      ⚡ Almost Gone!
+                    </span>
+                  ) : (
+                    <span className="text-green-600 text-sm">In Stock</span>
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="p-4 pt-0 space-y-2">

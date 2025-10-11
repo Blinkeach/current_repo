@@ -88,6 +88,10 @@ export function LocalFileUploader({
         throw new Error('Failed to upload file');
       }
 
+      // Get the response to extract the actual file URL
+      const uploadResult = await uploadFileResponse.json();
+      const fileUrl = uploadResult.url || uploadResult.filePath || uploadURL;
+      
       setUploadProgress(100);
 
       // Success
@@ -96,7 +100,8 @@ export function LocalFileUploader({
         description: "Invoice uploaded successfully!"
       });
 
-      onUploadComplete(uploadURL);
+      // Pass the actual file URL, not the upload endpoint URL
+      onUploadComplete(fileUrl);
       setShowModal(false);
       setSelectedFile(null);
 
