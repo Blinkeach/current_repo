@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, jsonb, doublePrecision, varchar, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, bigserial, bigint, integer, boolean, timestamp, json, jsonb, doublePrecision, varchar, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -107,7 +107,7 @@ export const productVariants = pgTable("product_variants", {
 
 // Orders table
 export const orders = pgTable("orders", {
-  id: serial("id").primaryKey(),
+  id: bigserial("id", { mode: "number" }).primaryKey(),
   userId: integer("user_id").notNull(),
   status: text("status").notNull().default("pending"), // pending, processing, shipped, out_for_delivery, delivered, cancelled
   totalAmount: integer("total_amount").notNull(), // in paise/paisa
@@ -131,7 +131,7 @@ export const orders = pgTable("orders", {
 // Order Items table
 export const orderItems = pgTable("order_items", {
   id: serial("id").primaryKey(),
-  orderId: integer("order_id").notNull(),
+  orderId: bigint("order_id", { mode: "number" }).notNull(),
   productId: integer("product_id").notNull(),
   name: text("name").notNull(),
   price: integer("price").notNull(), // in paise/paisa
@@ -172,7 +172,7 @@ export const reviews = pgTable("reviews", {
 // Return requests table
 export const returnRequests = pgTable("return_requests", {
   id: serial("id").primaryKey(),
-  orderId: integer("order_id").notNull(),
+  orderId: bigint("order_id", { mode: "number" }).notNull(),
   userId: integer("user_id").notNull(),
   reason: text("reason").notNull(),
   details: text("details"),
@@ -204,7 +204,7 @@ export const referralRewards = pgTable("referral_rewards", {
   id: serial("id").primaryKey(),
   referrerId: integer("referrer_id").notNull().references(() => users.id),
   referredId: integer("referred_id").notNull().references(() => users.id),
-  orderId: integer("order_id").notNull().references(() => orders.id),
+  orderId: bigint("order_id", { mode: "number" }).notNull().references(() => orders.id),
   amount: integer("amount").notNull(), // In paise (40 rupees = 4000 paise)
   status: text("status").notNull().default("pending"), // pending, processed, cancelled
   createdAt: timestamp("created_at").defaultNow(),

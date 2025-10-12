@@ -161,6 +161,18 @@ export class DeliveryService {
   }
 
   /**
+   * Sanitize text for Delhivery API (remove special characters)
+   */
+  private sanitizeForDelhivery(text: string): string {
+    // Delhivery doesn't accept special characters: &, #, %, ;, \
+    // Replace them with spaces or remove them
+    return text
+      .replace(/[&#%;\\]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
    * Create shipment with Delhivery API
    */
   private async createDelhiveryShipment(request: DeliveryRequest): Promise<DeliveryResponse> {
@@ -208,34 +220,35 @@ export class DeliveryService {
       //   }]
       // };
 const shipmentData = {
+  pickup_location: {
+    name: pickupLocation
+  },
   shipments: [{
-    name: request.recipientName,
-    address: request.deliveryAddress,
+    name: this.sanitizeForDelhivery(request.recipientName),
+    add: this.sanitizeForDelhivery(request.deliveryAddress),
     pin: request.pincode,
-    city: request.city,
-    state: request.state,
+    city: this.sanitizeForDelhivery(request.city),
+    state: this.sanitizeForDelhivery(request.state),
     country: 'India',
     phone: request.recipientPhone,
     order: request.orderId.toString(),
-    products_desc: request.items.map(item => `${item.name} x ${item.quantity}`).join(', '),
-    cod: request.isCod, // boolean!
-    cod_amount: request.isCod ? request.orderValue / 100 : 0, // number!
+    products_desc: this.sanitizeForDelhivery(request.items.map(item => `${item.name} x ${item.quantity}`).join(', ')),
+    payment_mode: request.isCod ? 'COD' : 'Prepaid',
+    cod_amount: request.isCod ? (request.orderValue / 100).toFixed(2) : '0',
     order_date: new Date().toISOString().split('T')[0],
-    total_amount: request.orderValue / 100, // number!
-    seller_address: sellerAddress,
-    seller_name: clientName,
+    total_amount: (request.orderValue / 100).toFixed(2),
+    seller_add: this.sanitizeForDelhivery(sellerAddress),
+    seller_name: this.sanitizeForDelhivery(clientName),
     seller_inv: invoiceNumber,
-    quantity: request.items.reduce((total, item) => total + item.quantity, 0), // number!
+    quantity: request.items.reduce((total, item) => total + item.quantity, 0).toString(),
     waybill: '',
-    shipment_width: request.dimensions?.width || 10, // number!
-    shipment_height: request.dimensions?.height || 10, // number!
-    weight: request.weight, // number!
+    shipment_width: (request.dimensions?.width || 10).toString(),
+    shipment_height: (request.dimensions?.height || 10).toString(),
+    shipment_length: (request.dimensions?.length || 10).toString(),
+    weight: request.weight.toString(),
     seller_gst_tin: '',
     shipping_mode: 'Surface',
-    address_type: 'home',
-    client: clientName,
-    pickup_location: pickupLocation,
-    payment_mode: request.isCod ? 'COD' : 'Prepaid' // optional, for your own records
+    address_type: 'home'
   }]
 };
 
@@ -265,6 +278,10 @@ const shipmentData = {
       const formData = new URLSearchParams();
       formData.append('format', 'json');
       formData.append('data', JSON.stringify(shipmentData));
+      
+      console.log('\n📤 Request Body (form-urlencoded):');
+      console.log('   - format: json');
+      console.log('   - data:', JSON.stringify(shipmentData));
       
       const response = await fetch(`${this.config.baseUrl}/cmu/create.json`, {
         method: 'POST',
@@ -302,13 +319,30 @@ const shipmentData = {
         };
       } else {
         console.error(`\n❌ ========== SHIPMENT CREATION FAILED ==========`);
-        console.error(`   - Message: ${responseData.message || 'Unknown error'}`);
+        console.error(`   - HTTP Status: ${response.status}`);
+        console.error(`   - Success Flag: ${responseData.success}`);
+        console.error(`   - Message: ${responseData.message || responseData.rmk || 'Unknown error'}`);
         console.error(`   - Errors:`, responseData.errors || ['Unknown error from Delhivery API']);
+        console.error(`   - Full Response:`, JSON.stringify(responseData, null, 2));
+        
+        // Check for common issues
+        if (responseData.rmk && responseData.rmk.includes('no data')) {
+          console.error(`\n⚠️ POSSIBLE CAUSES:`);
+          console.error(`   1. Pickup location "${pickupLocation}" may not be registered with Delhivery`);
+          console.error(`   2. Client name "${clientName}" may not match the registered name`);
+          console.error(`   3. Required fields may be missing or in wrong format`);
+          console.error(`   4. API key may not have permission to create shipments`);
+          console.error(`\n💡 SOLUTIONS:`);
+          console.error(`   - Verify pickup location name matches exactly (case-sensitive)`);
+          console.error(`   - Check if warehouse is registered in Delhivery dashboard`);
+          console.error(`   - Ensure all required fields are present and valid`);
+        }
+        
         console.error(`📮 ================================================\n`);
         return {
           success: false,
-          message: responseData.message || 'Failed to create Delhivery shipment',
-          errors: responseData.errors || ['Unknown error from Delhivery API']
+          message: responseData.message || responseData.rmk || 'Failed to create Delhivery shipment',
+          errors: responseData.errors || [responseData.rmk || 'Unknown error from Delhivery API']
         };
       }
     } catch (error) {

@@ -69,6 +69,16 @@
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
   }
+  
+  /* Ensure pages always start at top */
+  html {
+    scroll-behavior: auto !important;
+  }
+  
+  html, body {
+    overflow-x: hidden;
+    position: relative;
+  }
 }
 
 @layer utilities {

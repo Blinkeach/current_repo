@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import HeroSlider from '@/components/home/HeroSlider';
 import CategorySection from '@/components/home/CategorySection';
@@ -16,6 +16,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 const HomePage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+
+  // Ensure page loads at the top - Multiple approaches for reliability
+  useEffect(() => {
+    // Immediate scroll
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    // Delayed scroll to handle any async content loading
+    const timeoutId = setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <>

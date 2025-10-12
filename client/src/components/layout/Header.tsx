@@ -120,7 +120,7 @@ const Header: React.FC = () => {
     <header className="sticky top-0 z-50 bg-white shadow-md gpu-accelerated">
       <div className="max-w-7xl mx-auto">
         {/* Top bar with brand gradient */}
-        <div className="bg-brand-gradient p-1.5 flex justify-between text-white text-xs px-4 md:px-6">
+        {/* <div className="bg-brand-gradient p-1.5 flex justify-between text-white text-xs px-4 md:px-6">
           <p className="hidden sm:block font-medium">
             {t("common.welcome")} - {t("home.favorite_shopping")}
           </p>
@@ -147,7 +147,7 @@ const Header: React.FC = () => {
               {t("common.track_order")}
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Main header - Responsive and optimized */}
         <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 md:px-6">
@@ -349,9 +349,9 @@ const Header: React.FC = () => {
           />
         </div>
 
-        {/* Categories Nav - Enhanced with brand colors and responsive */}
+        {/* Categories Nav - Enhanced with brand colors and fully responsive */}
         <nav className="bg-gradient-to-r from-white via-gray-50 to-white border-t border-neutral-200 overflow-x-auto no-scrollbar">
-          <div className="flex px-3 sm:px-4 py-2 space-x-4 sm:space-x-6 md:justify-center text-xs sm:text-sm">
+          <div className="flex px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 space-x-2 xs:space-x-3 sm:space-x-4 md:space-x-6 lg:justify-center text-[10px] xs:text-xs sm:text-sm md:text-base">
             {categories.map((category, index) => (
               <TransitionLink
                 key={index}
@@ -361,8 +361,8 @@ const Header: React.FC = () => {
                 }
               >
                 <div className="flex flex-col items-center text-neutral-700 hover:text-primary smooth-transition min-w-fit group">
-                  <div className="text-base sm:text-lg mb-0.5 group-hover:scale-110 transition-transform">{category.icon}</div>
-                  <span className="leading-tight font-medium">{t(category.translationKey)}</span>
+                  <div className="text-sm xs:text-base sm:text-lg md:text-xl mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform duration-300">{category.icon}</div>
+                  <span className="leading-tight font-medium whitespace-nowrap">{t(category.translationKey)}</span>
                 </div>
               </TransitionLink>
             ))}

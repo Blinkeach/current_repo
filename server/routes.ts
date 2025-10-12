@@ -176,9 +176,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get orders for a specific user (admin or the user themselves)
   app.get("/api/orders/user/:userId", isAuthenticated, orderController.getOrdersByUser);
   
-  // Get a specific order by ID
+  // Get a specific order by ID or Tracking ID (public endpoint for order tracking)
   // This must come after the /api/orders/user routes to avoid route conflicts
-  app.get("/api/orders/:id", isAuthenticated, orderController.getOrderById);
+  // No authentication required - customers can track orders using tracking ID
+  app.get("/api/orders/:id", orderController.getOrderById);
   
   // Create a new order
   app.post("/api/orders", orderController.createOrder);

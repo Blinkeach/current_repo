@@ -56,7 +56,6 @@ const MarqueeCarousel: React.FC<MarqueeCarouselProps> = ({
     stopOnInteraction: false,
     stopOnMouseEnter: true,
     playOnInit: true,
-    rootNode: (emblaRoot: HTMLElement) => emblaRoot.parentElement,
   };
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
@@ -66,6 +65,8 @@ const MarqueeCarousel: React.FC<MarqueeCarouselProps> = ({
       dragFree: true, // Enable drag for better user control
       containScroll: "trimSnaps",
       slidesToScroll: 1,
+      skipSnaps: false,
+      duration: 25, // Smooth transition duration
     },
     [Autoplay(autoplayOptions)],
   );

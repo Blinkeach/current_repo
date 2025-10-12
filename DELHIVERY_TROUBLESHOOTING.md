@@ -1,403 +1,249 @@
-# 🔧 Delhivery API Troubleshooting Guide
+# Delhivery API Troubleshooting Guide
 
-**Issue:** "shipment list contains no data" error  
-**Status:** 🔄 Investigating and fixing  
-**Last Updated:** January 2025
-
----
-
-## 🚨 Current Problem
-
-Despite having the correct configuration, Delhivery API is returning:
-
-```json
-{
-  "rmk": "shipment list contains no data.",
-  "success": false,
-  "error": true
-}
+## Current Error
+```
+"rmk": "shipment list contains no data."
+"success": false
+"error": true
 ```
 
----
+## Most Common Causes (in order of likelihood)
 
-## ✅ What We've Fixed (Latest Changes)
+### 1. ⚠️ Pickup Location Not Registered (MOST LIKELY)
+**Symptom:** API returns "shipment list contains no data"
 
-### 1. **Data Type Corrections**
-
-**Problem:** Delhivery API might be strict about data types. Some fields were sent as numbers instead of strings.
-
-**Fix Applied:**
-- ✅ `cod_amount`: Changed from number to string
-- ✅ `total_amount`: Changed from number to string
-- ✅ `quantity`: Changed from number to string
-- ✅ `weight`: Changed from number to string
-- ✅ `shipment_width`: Changed from number to string
-- ✅ `shipment_height`: Changed from number to string
-
-### 2. **Invoice Number Added**
-
-**Problem:** `seller_inv` field was empty, which might be required by Delhivery.
-
-**Fix Applied:**
-- ✅ Auto-generate invoice number: `INV-{orderId}-{timestamp}`
-- ✅ Example: `INV-5-1736462037175`
-
-### 3. **Seller Information Consistency**
-
-**Problem:** `seller_name` was hardcoded as "Blinkeach" instead of using the registered client name.
-
-**Fix Applied:**
-- ✅ `seller_name`: Now uses `DELHIVERY_CLIENT_NAME` from `.env`
-- ✅ `seller_add`: Now uses `DELHIVERY_PICKUP_LOCATION` from `.env`
-
-### 4. **Shipping Mode Changed**
-
-**Problem:** "Express" shipping mode might not be available for all pickup locations.
-
-**Fix Applied:**
-- ✅ Changed from `Express` to `Surface` (more widely available)
-
----
-
-## 🔍 Possible Root Causes
-
-### 1. **Pickup Location Not Registered**
-
-**Symptom:** "shipment list contains no data"
-
-**Explanation:**
-- Delhivery requires pickup locations to be registered in their system
-- Even if you have the correct address, it must be registered as a warehouse
-
-**How to Check:**
-1. Login to https://one.delhivery.com/
-2. Go to **Warehouses** → **Pickup Locations**
-3. Verify that "WARD NO. 07, KB LANE, NEAR CHAURAHA MASJID, PANCHAYATI AKHARA,GAYA (BIHAR) 823001" is listed
-4. Check if the name matches **exactly** (case-sensitive)
+**Why:** Delhivery validates the `pickup_location` field against registered warehouses. If the name doesn't match EXACTLY (case-sensitive), the shipment is silently rejected.
 
 **How to Fix:**
-1. If not registered, click **Add Warehouse**
-2. Enter the exact address
-3. Set the warehouse name to match your `.env` configuration
-4. Wait for Delhivery to verify the location (may take 24-48 hours)
+1. Log in to Delhivery Dashboard: https://track.delhivery.com/
+2. Navigate to: Settings → Warehouses/Pickup Locations
+3. Find your registered warehouse name
+4. Copy the EXACT name (including spaces, case)
+5. Update `.env` file:
+   ```env
+   DELHIVERY_PICKUP_LOCATION=<exact name from dashboard>
+   ```
 
-### 2. **API Key Permissions**
+**Example Issues:**
+- Dashboard has: `"Blink Each Warehouse"` but `.env` has: `"Blink Each"` ❌
+- Dashboard has: `"BLINK EACH"` but `.env` has: `"Blink Each"` ❌
+- Dashboard has: `"Blink Each"` and `.env` has: `"Blink Each"` ✅
 
-**Symptom:** "shipment list contains no data" or "unauthorized"
+### 2. ⚠️ API Key Permissions
+**Symptom:** API returns "shipment list contains no data" or "unauthorized"
 
-**Explanation:**
-- The API key might be for a different environment (staging vs production)
-- The API key might not have permission to create shipments
-
-**How to Check:**
-1. Login to https://one.delhivery.com/
-2. Go to **Settings** → **API Keys**
-3. Verify the API key is for **Production** environment
-4. Check that it has **Create Shipment** permission
+**Why:** The API key might not have permission to create shipments, or it's a test key being used on production.
 
 **How to Fix:**
-1. Generate a new API key with correct permissions
-2. Update `.env` file with the new key
-3. Restart server
+1. Log in to Delhivery Dashboard
+2. Navigate to: Settings → API Keys
+3. Check if the key has "Create Shipment" permission
+4. Verify it's a production key (not staging/test)
+5. If needed, regenerate the key and update `.env`:
+   ```env
+   DELHIVERY_API_KEY=<new key>
+   ```
 
-### 3. **Client Name Mismatch**
+### 3. ⚠️ Account Not Activated for API
+**Symptom:** API returns "shipment list contains no data"
 
-**Symptom:** "shipment list contains no data" or "invalid client"
+**Why:** Your Delhivery account might not be activated for API access, or COD might not be enabled.
 
-**Explanation:**
-- Delhivery requires the client name to match exactly (case-sensitive)
-- Even a single space difference will cause rejection
+**How to Fix:**
+1. Contact Delhivery support: support@delhivery.com
+2. Ask them to:
+   - Activate API access for your account
+   - Enable COD shipments
+   - Verify your pickup location is registered
+3. Provide them with:
+   - Your client name: `BLINK EACH`
+   - Your API key (last 8 digits): `29c6d080`
+   - The error message you're receiving
 
-**How to Check:**
-1. Login to https://one.delhivery.com/
-2. Go to **Settings** → **Company Details**
-3. Copy the **exact** client name shown
+### 4. ⚠️ Missing Required Fields
+**Symptom:** API returns "shipment list contains no data"
 
-**Current Configuration:**
+**Why:** Some required fields might be missing or in the wrong format.
+
+**Already Fixed:**
+- ✅ Added `shipment_length` field
+- ✅ Converted all numeric fields to strings
+- ✅ Removed `cod` boolean field
+- ✅ Added `payment_mode` field
+- ✅ Sanitized special characters
+
+**Still Need to Verify:**
+- GST fields (might be required for your account)
+- E-waybill (required if order value > ₹50,000)
+
+## Quick Test: Verify Pickup Location
+
+### Option 1: Check via Delhivery Dashboard
+1. Go to: https://track.delhivery.com/
+2. Login with your credentials
+3. Navigate to: Settings → Warehouses
+4. Look for your warehouse
+5. Copy the exact name
+
+### Option 2: Contact Delhivery Support
+Send them this email:
+
+```
+Subject: Verify Pickup Location Name for API Integration
+
+Hi Delhivery Support,
+
+I'm integrating with your API and getting "shipment list contains no data" error.
+
+My details:
+- Client Name: BLINK EACH
+- API Key (last 8 digits): 29c6d080
+- Pickup Location in .env: "Blink Each"
+
+Can you please confirm:
+1. Is my account activated for API access?
+2. What is the exact pickup location name I should use?
+3. Is COD enabled for my account?
+4. Are there any other requirements I'm missing?
+
+Thank you!
+```
+
+## Testing the Fix
+
+### Step 1: Update .env File
+Once you have the correct pickup location name:
+
 ```env
+# Update this line with the EXACT name from Delhivery
+DELHIVERY_PICKUP_LOCATION=<exact name>
+
+# Also verify these:
 DELHIVERY_CLIENT_NAME=BLINK EACH
+DELHIVERY_API_KEY=bd2d6ce96269d88ed7ae8961bdaf2e5829c6d080
 ```
 
-**Verify:** Does this match your dashboard **exactly**?
-
-### 4. **COD Service Not Enabled**
-
-**Symptom:** "shipment list contains no data" for COD orders only
-
-**Explanation:**
-- COD (Cash on Delivery) service must be enabled separately
-- Your account might only support Prepaid orders
-
-**How to Check:**
-1. Login to https://one.delhivery.com/
-2. Go to **Settings** → **Services**
-3. Check if **COD** is enabled
-
-**How to Fix:**
-1. Contact Delhivery support to enable COD
-2. Or test with a Prepaid order first
-
-### 5. **Pincode Serviceability**
-
-**Symptom:** "shipment list contains no data" for specific pincodes
-
-**Explanation:**
-- Delhivery might not service the delivery pincode
-- The pickup pincode might not be serviceable
-
-**How to Check:**
-1. Use Delhivery's pincode checker: https://www.delhivery.com/pincode-checker
-2. Enter delivery pincode: `500016`
-3. Enter pickup pincode: `823001`
-
-**How to Fix:**
-- If pincode is not serviceable, you'll need to use a different courier
-- Or contact Delhivery to enable service for that pincode
-
----
-
-## 🧪 Testing Steps
-
-### Step 1: Restart Server
-
-**CRITICAL:** You must restart the server to load the new code changes.
-
-```powershell
-# Stop the server (Ctrl+C)
-# Then restart:
+### Step 2: Restart the Server
+```bash
+# Stop the current server (Ctrl+C)
 npm run dev
 ```
 
-### Step 2: Test Order #5 Again
+### Step 3: Create a Test Order
+1. Go to your website
+2. Add a product to cart
+3. Place an order
+4. Go to admin panel
+5. Change order status to "processing"
 
-1. Go to **Admin Panel** → **Orders**
-2. Find **Order #5**
-3. Change status back to "Pending" (if needed)
-4. Then change status to **"Shipped"**
-5. Watch the server logs carefully
+### Step 4: Check the Logs
+Look for these in the console:
 
-### Step 3: Check New Logs
-
-You should now see:
-
+**Success:**
 ```
-📋 Delhivery Shipment Details:
-   - Invoice Number: INV-5-1736462037175
-   - Client: BLINK EACH
-   - Pickup Location: WARD NO. 07, KB LANE...
-   - Seller Address: WARD NO. 07, KB LANE...
-
-📦 Full Shipment Data: {
-  "shipment": [{
-    "seller_inv": "INV-5-1736462037175",
-    "seller_name": "BLINK EACH",
-    "seller_add": "WARD NO. 07, KB LANE...",
-    "cod_amount": "11.44",
-    "total_amount": "11.44",
-    "quantity": "1",
-    "weight": "1",
-    "shipping_mode": "Surface"
-  }]
-}
+✅ ========== SHIPMENT CREATED SUCCESSFULLY ==========
+   - Waybill/Tracking ID: <tracking number>
+   - Tracking URL: <url>
 ```
 
-### Step 4: Analyze Response
-
-**If Success:**
-```json
-{
-  "success": true,
-  "packages": [{
-    "waybill": "XXXXXXXXXX",
-    "status": "Success"
-  }]
-}
+**Failure:**
+```
+❌ ========== SHIPMENT CREATION FAILED ==========
+   - Message: shipment list contains no data.
+   
+⚠️ POSSIBLE CAUSES:
+   1. Pickup location "Blink Each" may not be registered with Delhivery
+   2. Client name "BLINK EACH" may not match the registered name
 ```
 
-**If Still Failing:**
-```json
-{
-  "rmk": "shipment list contains no data.",
-  "success": false
-}
+## Alternative: Try with Full Address
+
+If the pickup location name doesn't work, try using the full address:
+
+```env
+DELHIVERY_PICKUP_LOCATION=WARD NO. 07, KB LANE, NEAR CHAURAHA MASJID, PANCHAYATI AKHARA, GAYA, BIHAR, 823001
 ```
 
----
+Some Delhivery accounts are configured to use the full address instead of a warehouse name.
 
-## 🔧 Advanced Debugging
+## Direct API Test (Advanced)
 
-### Option 1: Test with Delhivery's API Tester
+If you want to test the API directly without the application:
 
-1. Go to https://one.delhivery.com/api-tester
-2. Select **Create Shipment** API
-3. Fill in the same data we're sending
-4. Click **Test**
-5. Compare the response with our server logs
-
-### Option 2: Contact Delhivery Support
-
-If the issue persists, contact Delhivery support with:
-
-**Subject:** "API Error: shipment list contains no data"
-
-**Details to Provide:**
-- Client Name: `BLINK EACH`
-- API Key: `***29c6d080` (last 8 digits)
-- Pickup Location: `WARD NO. 07, KB LANE, NEAR CHAURAHA MASJID, PANCHAYATI AKHARA,GAYA (BIHAR) 823001`
-- Error Message: "shipment list contains no data"
-- Request Payload: (copy from server logs)
-
-**Delhivery Support:**
-- Email: support@delhivery.com
-- Phone: +91-11-46516000
-- Dashboard: https://one.delhivery.com/support
-
-### Option 3: Verify Pickup Location Registration
-
-Run this test to check if your pickup location is registered:
-
+### Using cURL:
 ```bash
-curl -X GET "https://track.delhivery.com/api/backend/clientwarehouse/all/" \
+curl -X POST "https://track.delhivery.com/api/cmu/create.json" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
   -H "Authorization: Token bd2d6ce96269d88ed7ae8961bdaf2e5829c6d080" \
-  -H "Accept: application/json"
+  -H "Accept: application/json" \
+  -d "format=json" \
+  -d 'data={"shipments":[{"name":"Test User","address":"Test Address","pin":"500016","city":"Hyderabad","state":"Telangana","country":"India","phone":"8709144545","order":"TEST123","products_desc":"Test Product","payment_mode":"COD","cod_amount":"100.00","order_date":"2025-01-11","total_amount":"100.00","seller_address":"WARD NO. 07, KB LANE, NEAR CHAURAHA MASJID, PANCHAYATI AKHARA, GAYA (BIHAR) 823001","seller_name":"BLINK EACH","seller_inv":"INV-TEST-123","quantity":"1","waybill":"","shipment_width":"10","shipment_height":"10","shipment_length":"10","weight":"1","seller_gst_tin":"","shipping_mode":"Surface","address_type":"home","client":"BLINK EACH","pickup_location":"Blink Each"}]}'
 ```
 
-This will list all registered warehouses for your account.
+### Using Postman:
+1. Method: POST
+2. URL: `https://track.delhivery.com/api/cmu/create.json`
+3. Headers:
+   - `Content-Type`: `application/x-www-form-urlencoded`
+   - `Authorization`: `Token bd2d6ce96269d88ed7ae8961bdaf2e5829c6d080`
+   - `Accept`: `application/json`
+4. Body (x-www-form-urlencoded):
+   - `format`: `json`
+   - `data`: `<paste the shipment JSON>`
 
----
+## Expected Response
 
-## 📋 Checklist Before Contacting Support
-
-- [ ] ✅ API key is correct and from production environment
-- [ ] ✅ Client name matches dashboard exactly (case-sensitive)
-- [ ] ✅ Pickup location is registered in Delhivery dashboard
-- [ ] ✅ COD service is enabled (if testing COD orders)
-- [ ] ✅ Delivery pincode is serviceable by Delhivery
-- [ ] ✅ Pickup pincode is serviceable by Delhivery
-- [ ] ✅ Server has been restarted after `.env` changes
-- [ ] ✅ All required fields are present in shipment data
-- [ ] ✅ Data types are correct (strings vs numbers)
-- [ ] ✅ Invoice number is generated
-- [ ] ✅ Seller information matches client information
-
----
-
-## 🎯 What Changed in Latest Fix
-
-### File: `server/services/delivery.ts`
-
-**Changes Made:**
-
-1. **Line 177:** Added invoice number generation
-   ```typescript
-   const invoiceNumber = `INV-${request.orderId}-${Date.now()}`;
-   ```
-
-2. **Line 191:** Convert `cod_amount` to string
-   ```typescript
-   cod_amount: request.isCod ? (request.orderValue / 100).toString() : '0'
-   ```
-
-3. **Line 193:** Convert `total_amount` to string
-   ```typescript
-   total_amount: (request.orderValue / 100).toString()
-   ```
-
-4. **Line 194:** Use pickup location as seller address
-   ```typescript
-   seller_add: pickupLocation
-   ```
-
-5. **Line 195:** Use client name as seller name
-   ```typescript
-   seller_name: clientName
-   ```
-
-6. **Line 196:** Add invoice number
-   ```typescript
-   seller_inv: invoiceNumber
-   ```
-
-7. **Line 197:** Convert quantity to string
-   ```typescript
-   quantity: request.items.reduce((total, item) => total + item.quantity, 0).toString()
-   ```
-
-8. **Lines 199-201:** Convert dimensions and weight to strings
-   ```typescript
-   shipment_width: (request.dimensions?.width || 10).toString(),
-   shipment_height: (request.dimensions?.height || 10).toString(),
-   weight: request.weight.toString()
-   ```
-
-9. **Line 203:** Change shipping mode to Surface
-   ```typescript
-   shipping_mode: 'Surface'
-   ```
-
-10. **Lines 221-224:** Enhanced logging
-    ```typescript
-    console.log('   - Invoice Number:', invoiceNumber);
-    console.log('   - Seller Address:', pickupLocation);
-    ```
-
----
-
-## 🚀 Next Steps
-
-1. **✅ Restart Server** - Load the new code changes
-2. **✅ Test Order #5** - Try creating shipment again
-3. **✅ Check Logs** - Verify new fields are being sent
-4. **✅ Verify Pickup Location** - Ensure it's registered in Delhivery
-5. **✅ Contact Support** - If issue persists, contact Delhivery with details
-
----
-
-## 📊 Expected vs Actual
-
-### Expected Behavior:
+### Success:
 ```json
 {
   "success": true,
-  "packages": [{
-    "waybill": "XXXXXXXXXX",
-    "status": "Success",
-    "remarks": "Shipment created successfully"
-  }]
+  "packages": [
+    {
+      "waybill": "1234567890",
+      "status": "Success"
+    }
+  ],
+  "upload_wbn": "1234567890"
 }
 ```
 
-### Current Behavior:
+### Failure (Current):
 ```json
 {
-  "rmk": "shipment list contains no data.",
   "success": false,
-  "error": true
+  "error": true,
+  "rmk": "shipment list contains no data.",
+  "package_count": 0
 }
 ```
 
-### Most Likely Cause:
-**Pickup location not registered in Delhivery system**
+## Next Steps
 
----
+1. **Immediate:** Verify pickup location name from Delhivery dashboard
+2. **If not accessible:** Contact Delhivery support
+3. **After fixing:** Test with a new order
+4. **If still failing:** Share the full request/response with Delhivery support
 
-## 🔐 Security Note
+## Support Contacts
 
-When contacting Delhivery support, **never share**:
-- ❌ Full API key (only last 8 digits)
-- ❌ Database credentials
-- ❌ Session secrets
-- ❌ Payment gateway keys
+- **Delhivery Support Email:** support@delhivery.com
+- **Delhivery API Support:** api.support@delhivery.com
+- **Delhivery Phone:** +91-11-46155555
 
-**Safe to share:**
-- ✅ Client name
-- ✅ Pickup location address
-- ✅ Last 8 digits of API key
-- ✅ Error messages
-- ✅ Request payload (without sensitive data)
+## Summary of Code Changes Made
 
----
+✅ **Fixed:**
+1. Added `shipment_length` field (was missing)
+2. Converted all numeric fields to strings
+3. Removed `cod` boolean field
+4. Added proper `payment_mode` field
+5. Sanitized special characters from addresses
+6. Enhanced error logging
 
-**Status:** 🔄 Awaiting test results after latest fixes  
-**Priority:** 🔴 HIGH - Blocking shipment creation  
-**Next Action:** Restart server and test Order #5
+⚠️ **Still Need to Verify:**
+1. Pickup location name matches Delhivery registration
+2. API key has correct permissions
+3. Account is activated for API access
+4. COD is enabled for the account
+
+**Most likely issue:** Pickup location name mismatch. Please verify this first!

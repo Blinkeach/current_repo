@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { storage } from "../storage";
-import { insertOrderSchema, insertOrderItemSchema } from "@shared/schema";
+import { insertOrderSchema, insertOrderItemSchema, type Order } from "@shared/schema";
 import { z } from "zod";
 import adminController from "./admin";
 import { sendOrderConfirmation, sendOrderStatusUpdate, sendReviewRequest } from "../services/email";
@@ -28,16 +28,24 @@ const orderController = {
     }
   },
   
-  // Get a specific order by ID
+  // Get a specific order by ID or Tracking ID
   getOrderById: async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const idParam = req.params.id;
+      let order: Order | undefined;
       
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid order ID" });
+      // Try to parse as number (order ID)
+      const id = parseInt(idParam);
+      
+      if (!isNaN(id)) {
+        // It's a valid number, search by order ID
+        order = await storage.getOrderById(id);
       }
       
-      const order = await storage.getOrderById(id);
+      // If not found by ID, try searching by tracking ID
+      if (!order) {
+        order = await storage.getOrderByTrackingId(idParam);
+      }
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });

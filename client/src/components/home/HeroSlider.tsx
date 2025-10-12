@@ -127,16 +127,16 @@ const HeroSlider: React.FC = () => {
                 className="w-full h-full object-cover"
                 loading={slide.id === 1 ? "eager" : "lazy"}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent flex items-center">
-                <div className="text-white p-4 sm:p-6 md:p-12 max-w-xl z-10">
-                  <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-2 drop-shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent flex items-center z-10">
+                <div className="text-white p-3 xs:p-4 sm:p-6 md:p-8 lg:p-12 max-w-xl relative z-20">
+                  <h2 className="text-base xs:text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1.5 xs:mb-2 sm:mb-3 md:mb-4 drop-shadow-lg">
                     {slide.title}
                   </h2>
-                  <p className="text-xs sm:text-sm md:text-base mb-4 drop-shadow-md">
+                  <p className="text-[10px] xs:text-xs sm:text-sm md:text-base mb-2 xs:mb-3 sm:mb-4 md:mb-6 drop-shadow-md line-clamp-2 sm:line-clamp-none">
                     {slide.description}
                   </p>
                   <Link href={slide.buttonLink}>
-                    <Button className="bg-accent hover:bg-accent/90 text-white py-2 px-4 sm:px-6 rounded-md font-medium transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                    <Button className="bg-[#FFC700] hover:bg-[#FFD700] text-gray-900 py-1.5 px-3 xs:py-2 xs:px-4 sm:py-2.5 sm:px-6 md:py-3 md:px-8 rounded-md font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 text-xs xs:text-sm sm:text-base border-2 border-yellow-600 hover:border-yellow-700">
                       {slide.buttonText}
                     </Button>
                   </Link>

@@ -126,9 +126,20 @@ function App() {
   
   // Optimize initial loading state - reduced from 2.5s to 1s for better performance
   useEffect(() => {
+    // Ensure page starts at top
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
     // Show the loader for minimal time for better perceived performance
     const timer = setTimeout(() => {
       setIsInitialLoading(false);
+      // Force scroll to top after loader finishes
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 50);
     }, 1000);
     
     return () => clearTimeout(timer);

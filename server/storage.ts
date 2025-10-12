@@ -74,6 +74,7 @@ export interface IStorage {
   // Order methods
   getOrders(): Promise<Order[]>;
   getOrderById(id: number): Promise<Order | undefined>;
+  getOrderByTrackingId(trackingId: string): Promise<Order | undefined>;
   getOrdersByUserId(userId: number): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
@@ -422,6 +423,12 @@ export class MemStorage implements IStorage {
 
   async getOrderById(id: number): Promise<Order | undefined> {
     return this.orders.get(id);
+  }
+
+  async getOrderByTrackingId(trackingId: string): Promise<Order | undefined> {
+    return Array.from(this.orders.values()).find(
+      (order) => order.trackingId === trackingId
+    );
   }
 
   async getOrdersByUserId(userId: number): Promise<Order[]> {
@@ -1780,6 +1787,11 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderById(id: number): Promise<Order | undefined> {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async getOrderByTrackingId(trackingId: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.trackingId, trackingId));
     return order;
   }
 

@@ -44,6 +44,10 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(autoPlay);
   const [visibleItems, setVisibleItems] = useState(4);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const [isPageVisible, setIsPageVisible] = useState(true);
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -64,6 +68,16 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
     return () => window.removeEventListener('resize', updateVisibleItems);
   }, []);
 
+  // Page Visibility API - Pause autoplay when tab is not visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // Fetch personalized recommendations
   const { data: recommendations = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/recommendations', userId, currentProductId, category],
@@ -80,9 +94,34 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
     },
   });
 
-  // Auto-play functionality - Fixed for smooth continuous scrolling
+  // Reset currentIndex when recommendations change or visibleItems change
   useEffect(() => {
-    if (!isAutoPlaying || recommendations.length <= visibleItems) return;
+    setCurrentIndex(0);
+    setIsAutoPlaying(autoPlay); // Re-enable autoplay when data changes
+  }, [recommendations.length, visibleItems, autoPlay]);
+
+  // Resume autoplay after user interaction stops
+  useEffect(() => {
+    if (!isUserInteracting || !autoPlay) return;
+
+    const resumeTimer = setTimeout(() => {
+      setIsAutoPlaying(true);
+      setIsUserInteracting(false);
+    }, 5000); // Resume autoplay 5 seconds after last interaction
+
+    return () => clearTimeout(resumeTimer);
+  }, [isUserInteracting, autoPlay]);
+
+  // Auto-play functionality - Enhanced for all devices
+  useEffect(() => {
+    // Don't autoplay if:
+    // - autoPlay is disabled
+    // - user is interacting
+    // - page is not visible
+    // - not enough items to scroll
+    if (!isAutoPlaying || isUserInteracting || !isPageVisible || recommendations.length <= visibleItems) {
+      return;
+    }
 
     const interval = setInterval(() => {
       setCurrentIndex(prev => {
@@ -92,9 +131,10 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
     }, 3500); // Smooth 3.5 second intervals
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, recommendations.length, visibleItems]);
+  }, [isAutoPlaying, isUserInteracting, isPageVisible, recommendations.length, visibleItems]);
 
   const handlePrevious = () => {
+    setIsUserInteracting(true);
     setIsAutoPlaying(false);
     setCurrentIndex(prev => {
       const maxIndex = Math.max(0, recommendations.length - visibleItems);
@@ -103,6 +143,7 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
   };
 
   const handleNext = () => {
+    setIsUserInteracting(true);
     setIsAutoPlaying(false);
     setCurrentIndex(prev => {
       const maxIndex = Math.max(0, recommendations.length - visibleItems);
@@ -135,6 +176,49 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
     navigate(`/product/${productId}`);
   };
 
+  // Touch swipe handlers for mobile - Enhanced
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsUserInteracting(true);
+    setIsAutoPlaying(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      handleNext();
+    }
+    if (isRightSwipe) {
+      handlePrevious();
+    }
+
+    // Reset
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
+  // Mouse interaction handlers for desktop
+  const handleMouseEnter = () => {
+    setIsUserInteracting(true);
+    setIsAutoPlaying(false);
+  };
+
+  const handleMouseLeave = () => {
+    if (autoPlay) {
+      setIsUserInteracting(false);
+      setIsAutoPlaying(true);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -157,12 +241,13 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
       <div className="flex items-center justify-between">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
         {recommendations.length > visibleItems && (
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handlePrevious}
               className="h-8 w-8 p-0"
+              aria-label="Previous products"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -171,6 +256,7 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
               size="sm"
               onClick={handleNext}
               className="h-8 w-8 p-0"
+              aria-label="Next products"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -178,27 +264,35 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
         )}
       </div>
 
-      <div className="relative overflow-hidden w-full">
+      <div 
+        className="relative overflow-hidden w-full touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{ cursor: 'grab' }}
+        onMouseDown={(e) => e.currentTarget.style.cursor = 'grabbing'}
+        onMouseUp={(e) => e.currentTarget.style.cursor = 'grab'}
+      >
         <div 
-          className="flex gap-3 sm:gap-4 transition-transform duration-700 ease-in-out"
+          className="flex gap-3 sm:gap-4 transition-transform duration-500 ease-in-out will-change-transform"
           style={{
             transform: `translateX(-${currentIndex * (100 / visibleItems)}%)`,
             width: `${(recommendations.length / visibleItems) * 100}%`,
           }}
-          onMouseEnter={() => setIsAutoPlaying(false)}
-          onMouseLeave={() => setIsAutoPlaying(autoPlay)}
         >
           {recommendations.map((product, index) => (
             <div
-              key={product.id}
+              key={`${product.id}-${index}`}
               className="flex-shrink-0 px-1"
               style={{ width: `${100 / recommendations.length}%` }}
             >
                 <Card
-                  className="group cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                  className="group cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 h-full"
                   onClick={() => handleProductClick(product.id)}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="relative">
                       <img
                         src={product.images[0]}
@@ -289,7 +383,12 @@ const ProductRecommendations: React.FC<RecommendationCarouselProps> = ({
                   ? 'bg-primary'
                   : 'bg-gray-300'
               }`}
-              onClick={() => setCurrentIndex(index * visibleItems)}
+              onClick={() => {
+                setIsUserInteracting(true);
+                setIsAutoPlaying(false);
+                setCurrentIndex(index * visibleItems);
+              }}
+              aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
