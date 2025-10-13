@@ -18,9 +18,22 @@ export const pool = new Pool({
   ssl: {
     rejectUnauthorized: false // Required for Render PostgreSQL
   },
-  max: 10, // Maximum number of connections
+  max: 20, // Maximum number of connections
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 30000, // Increased from 10s to 30s
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000,
+});
+
+// Handle pool errors to prevent crashes
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  // Don't exit the process, just log the error
+});
+
+// Handle connection errors
+pool.on('connect', () => {
+  console.log('Database connection established');
 });
 
 export const db = drizzle(pool, { schema });

@@ -207,30 +207,32 @@ const ProductManagement: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Product Management</h1>
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} modal={true}>
           <DialogTrigger asChild>
             <Button className="bg-secondary hover:bg-secondary-dark text-white">
               <Plus className="h-5 w-5 mr-2" /> Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Add New Product</DialogTitle>
               <DialogDescription>
                 Fill in the details to add a new product to your inventory.
               </DialogDescription>
             </DialogHeader>
-            <ProductForm 
-              onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-                setIsCreateModalOpen(false);
-                toast({
-                  title: 'Product created',
-                  description: 'The product has been successfully created.',
-                  duration: 3000
-                });
-              }}
-            />
+            <div className="overflow-y-auto flex-1 pr-2">
+              <ProductForm 
+                onSuccess={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+                  setIsCreateModalOpen(false);
+                  toast({
+                    title: 'Product created',
+                    description: 'The product has been successfully created.',
+                    duration: 3000
+                  });
+                }}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -453,28 +455,30 @@ const ProductManagement: React.FC = () => {
       </div>
 
       {/* Edit Product Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen} modal={true}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Edit Product</DialogTitle>
             <DialogDescription>
               Update the details of your product.
             </DialogDescription>
           </DialogHeader>
-          {productToEdit && (
-            <ProductForm 
-              product={productToEdit}
-              onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-                setIsEditModalOpen(false);
-                toast({
-                  title: 'Product updated',
-                  description: 'The product has been successfully updated.',
-                  duration: 3000
-                });
-              }}
-            />
-          )}
+          <div className="overflow-y-auto flex-1 pr-2">
+            {productToEdit && (
+              <ProductForm 
+                product={productToEdit}
+                onSuccess={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+                  setIsEditModalOpen(false);
+                  toast({
+                    title: 'Product updated',
+                    description: 'The product has been successfully updated.',
+                    duration: 3000
+                  });
+                }}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

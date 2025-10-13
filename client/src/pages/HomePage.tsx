@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import HeroSlider from '@/components/home/HeroSlider';
 import CategorySection from '@/components/home/CategorySection';
@@ -17,21 +17,62 @@ const HomePage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
 
-  // Ensure page loads at the top - Multiple approaches for reliability
-  useEffect(() => {
-    // Immediate scroll
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-
-    // Delayed scroll to handle any async content loading
-    const timeoutId = setTimeout(() => {
+  // Use useLayoutEffect to scroll before paint - prevents flash of wrong scroll position
+  useLayoutEffect(() => {
+    // Immediate scroll before browser paints - most aggressive approach
+    const scrollToTop = () => {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
+      window.scroll(0, 0);
+    };
+    
+    scrollToTop();
+    
+    // Prevent any scroll during initial render
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+      scrollToTop();
+    };
+    
+    window.addEventListener('scroll', preventScroll, { passive: false });
+    
+    // Remove listener after a short delay
+    setTimeout(() => {
+      window.removeEventListener('scroll', preventScroll);
     }, 100);
+    
+    return () => {
+      window.removeEventListener('scroll', preventScroll);
+    };
+  }, []);
 
-    return () => clearTimeout(timeoutId);
+  // Additional scroll restoration after content loads
+  useEffect(() => {
+    const scrollToTop = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    
+    // Immediate scroll
+    scrollToTop();
+    
+    // Multiple delayed scrolls to handle async content loading
+    const timeouts = [
+      setTimeout(scrollToTop, 0),
+      setTimeout(scrollToTop, 50),
+      setTimeout(scrollToTop, 100),
+      setTimeout(scrollToTop, 200),
+      setTimeout(scrollToTop, 300),
+      setTimeout(scrollToTop, 500),
+      setTimeout(scrollToTop, 800),
+      setTimeout(scrollToTop, 1000),
+      setTimeout(scrollToTop, 1500),
+      setTimeout(scrollToTop, 2000),
+    ];
+
+    return () => timeouts.forEach(clearTimeout);
   }, []);
 
   return (

@@ -55,11 +55,11 @@ const RecentlyViewedSection: React.FC = () => {
   }
 
   return (
-    <section className="py-8 px-4 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <section className="py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
         <div className="relative">
-          <h2 className="text-xl md:text-2xl font-bold">Recently Viewed</h2>
-          <div className="absolute -bottom-2 left-0 w-1/2 h-1 bg-secondary rounded-full"></div>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold">Recently Viewed</h2>
+          <div className="absolute -bottom-1 sm:-bottom-2 left-0 w-1/2 h-0.5 sm:h-1 bg-secondary rounded-full"></div>
         </div>
         
         <div className="flex items-center gap-2">
@@ -67,53 +67,61 @@ const RecentlyViewedSection: React.FC = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-sm text-gray-500 hover:text-red-500 flex items-center" 
+              className="text-xs sm:text-sm text-gray-500 hover:text-red-500 flex items-center transition-colors duration-300" 
               onClick={clearRecentlyViewed}
             >
-              <X className="h-4 w-4 mr-1" /> Clear
+              <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> 
+              <span className="hidden xs:inline">Clear</span>
             </Button>
           )}
         </div>
       </div>
       
       {isLoading ? (
-        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+        <div className="flex overflow-x-auto gap-2 sm:gap-3 md:gap-4 pb-4 scrollbar-hide">
           {[1, 2, 3, 4, 5, 6].map((item) => (
-            <div key={item} className="flex-shrink-0 w-48 sm:w-56 md:w-60 bg-white rounded-md shadow-sm p-3">
-              <Skeleton className="w-full aspect-square mb-3" />
-              <Skeleton className="w-3/4 h-4 mb-2" />
-              <Skeleton className="w-1/2 h-4 mb-2" />
-              <Skeleton className="w-1/3 h-4 mb-2" />
+            <div key={item} className="flex-shrink-0 w-36 xs:w-40 sm:w-48 md:w-56 lg:w-60 bg-white rounded-md shadow-sm p-2 sm:p-3">
+              <Skeleton className="w-full aspect-square mb-2 sm:mb-3" />
+              <Skeleton className="w-3/4 h-3 sm:h-4 mb-1.5 sm:mb-2" />
+              <Skeleton className="w-1/2 h-3 sm:h-4 mb-1.5 sm:mb-2" />
+              <Skeleton className="w-1/3 h-3 sm:h-4 mb-1.5 sm:mb-2" />
             </div>
           ))}
         </div>
       ) : (
         <div 
           ref={scrollContainerRef}
-          className="flex overflow-x-auto gap-4 pb-4 no-scrollbar"
+          className="flex overflow-x-auto gap-2 sm:gap-3 md:gap-4 pb-4 no-scrollbar"
           style={{ scrollBehavior: 'smooth' }}
         >
           {recentlyViewedProducts.map((product) => (
-            <div key={product.id} className="flex-shrink-0 w-48 sm:w-56 md:w-60">
+            <div key={product.id} className="flex-shrink-0 w-36 xs:w-40 sm:w-48 md:w-56 lg:w-60">
               <Link to={`/product/${product.id}`}>
-                <div className="bg-white rounded-md shadow-sm hover:shadow-md transition-shadow p-3 h-full">
+                <div className="bg-white rounded-md shadow-sm hover:shadow-lg transition-all duration-300 p-2 sm:p-3 h-full transform hover:-translate-y-1">
                   {/* Product Image */}
-                  <div className="mb-3 aspect-square overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
+                  <div className="mb-2 sm:mb-3 aspect-square overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
                     <img 
                       src={product.images?.[0] || '/placeholder-product.jpg'} 
                       alt={product.name} 
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                      loading="lazy"
                     />
                   </div>
                   
                   {/* Product Name */}
-                  <h3 className="text-sm font-medium line-clamp-2 mb-1">{product.name}</h3>
+                  <h3 className="text-xs sm:text-sm font-medium line-clamp-2 mb-1 leading-tight">
+                    {product.name}
+                  </h3>
                   
                   {/* Price */}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold text-primary">₹{Math.round(product.price / 100)}</span>
+                  <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
+                    <span className="font-bold text-primary text-sm sm:text-base">
+                      ₹{Math.round(product.price / 100)}
+                    </span>
                     {product.originalPrice && (
-                      <span className="text-xs text-gray-400 line-through">₹{Math.round(product.originalPrice / 100)}</span>
+                      <span className="text-[10px] sm:text-xs text-gray-400 line-through">
+                        ₹{Math.round(product.originalPrice / 100)}
+                      </span>
                     )}
                   </div>
                 </div>

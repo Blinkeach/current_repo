@@ -73,11 +73,41 @@
   /* Ensure pages always start at top */
   html {
     scroll-behavior: auto !important;
+    overflow-anchor: none !important;
   }
   
   html, body {
     overflow-x: hidden;
     position: relative;
+  }
+  
+  /* Prevent scroll restoration */
+  html {
+    scroll-restoration: manual !important;
+  }
+  
+  /* Ensure SVG stroke is rendered properly for rating stars */
+  svg {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  
+  /* Make SVG elements inherit fill and stroke from parent - Critical for Rating stars */
+  span > svg {
+    fill: inherit !important;
+    stroke: inherit !important;
+    stroke-width: inherit !important;
+  }
+  
+  /* Force star rating borders to be visible - CRITICAL FIX */
+  .rating-star-wrapper svg,
+  .rating-star-wrapper svg path,
+  .rating-star-wrapper svg > * {
+    fill: inherit !important;
+    stroke: inherit !important;
+    stroke-width: inherit !important;
+    vector-effect: non-scaling-stroke !important;
+    paint-order: stroke fill !important;
   }
 }
 
@@ -248,6 +278,20 @@
   
   .grid-responsive-products {
     @apply grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6;
+  }
+  
+  /* Mobile-first responsive flex utilities */
+  .flex-responsive {
+    @apply flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4;
+  }
+  
+  /* Responsive image utilities */
+  .img-responsive {
+    @apply w-full h-auto object-contain;
+  }
+  
+  .img-responsive-cover {
+    @apply w-full h-full object-cover;
   }
 }
 

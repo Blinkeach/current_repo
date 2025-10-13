@@ -79,42 +79,42 @@ const DealsSection: React.FC = () => {
   const displayProducts = Array.isArray(products) && products.length > 0 ? products : fallbackProducts;
 
   return (
-    <section className="py-6 px-4 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <section className="py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
         <div className="flex items-center">
-          <div className="p-2 rounded-md mr-3 bg-red-50">
-            <Tag className="h-5 w-5 text-red-600" />
+          <div className="p-1.5 sm:p-2 rounded-md mr-2 sm:mr-3 bg-red-50">
+            <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
           </div>
           <div>
-            <h2 className="text-lg md:text-xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 flex items-center">
               Deal of the Day
-              <div className="h-1 w-10 ml-3 rounded-full bg-red-500"></div>
+              <div className="h-0.5 sm:h-1 w-8 sm:w-10 ml-2 sm:ml-3 rounded-full bg-red-500"></div>
             </h2>
           </div>
         </div>
         <Link href="/shop?filter=deals">
-          <div className="group flex items-center px-4 py-2 bg-gradient-to-r from-primary to-primary/90 text-white rounded-lg hover:from-primary/90 hover:to-primary transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer">
-            <span className="text-sm font-medium mr-2">View All</span>
-            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+          <div className="group flex items-center px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-primary to-primary/90 text-white rounded-lg hover:from-primary/90 hover:to-primary transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer">
+            <span className="text-xs sm:text-sm font-medium mr-1 sm:mr-2">View All</span>
+            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </div>
         </Link>
       </div>
       
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
           {Array(5).fill(0).map((_, index) => (
-            <div key={index} className="space-y-3">
-              <Skeleton className="h-40 w-full rounded-lg" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-8 w-full" />
+            <div key={index} className="space-y-2 sm:space-y-3">
+              <Skeleton className="h-32 sm:h-36 md:h-40 w-full rounded-lg" />
+              <div className="space-y-1.5 sm:space-y-2">
+                <Skeleton className="h-3 sm:h-4 w-3/4" />
+                <Skeleton className="h-3 sm:h-4 w-1/2" />
+                <Skeleton className="h-7 sm:h-8 w-full" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
           {displayProducts.map((product, index) => (
             <div 
               key={product.id} 

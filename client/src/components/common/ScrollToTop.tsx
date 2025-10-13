@@ -35,6 +35,13 @@ const ScrollToTop = () => {
       scrollPositions.set(previousLocation.current, window.scrollY);
     }
 
+    // Immediate scroll to prevent flash
+    if (!isNavigatingBack.current) {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+
     // Small delay to ensure DOM is ready
     const timeoutId = setTimeout(() => {
       if (isNavigatingBack.current) {
@@ -62,6 +69,8 @@ const ScrollToTop = () => {
           left: 0,
           behavior: 'instant'
         });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
       }
 
       previousLocation.current = location;

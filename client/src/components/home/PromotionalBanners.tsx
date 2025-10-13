@@ -44,8 +44,8 @@ const PromotionalBanners: React.FC = () => {
   }
 
   return (
-    <section className="py-6 px-4 max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <section className="py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
         {activeBanners.map((banner, index) => {
           // Dynamic gradient colors based on index
           const gradients = [
@@ -67,29 +67,33 @@ const PromotionalBanners: React.FC = () => {
           return (
             <div 
               key={banner.id} 
-              className={`bg-gradient-to-r ${colorClass} rounded-lg overflow-hidden shadow-sm`}
+              className={`bg-gradient-to-r ${colorClass} rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
             >
-              <div className="flex flex-col md:flex-row items-center p-4 md:p-6">
-                <div className="md:w-1/2 text-white mb-4 md:mb-0">
-                  <h3 className="font-bold text-xl md:text-2xl mb-2">{banner.title}</h3>
+              <div className="flex flex-col md:flex-row items-center p-3 sm:p-4 md:p-6">
+                <div className="md:w-1/2 text-white mb-3 sm:mb-4 md:mb-0 md:pr-4">
+                  <h3 className="font-bold text-lg sm:text-xl md:text-2xl mb-1.5 sm:mb-2 leading-tight">
+                    {banner.title}
+                  </h3>
                   {banner.description && (
-                    <p className="text-white/90 mb-3">{banner.description}</p>
+                    <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base leading-relaxed">
+                      {banner.description}
+                    </p>
                   )}
                   {banner.buttonLink && (
                     <Link href={banner.buttonLink}>
                       <Button 
-                        className={`bg-white ${textClass} font-medium py-1.5 px-4 rounded hover:bg-neutral-100 transition-colors`}
+                        className={`bg-white ${textClass} font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded text-xs sm:text-sm hover:bg-neutral-100 transition-all duration-300 hover:scale-105 active:scale-95`}
                       >
                         {banner.buttonText || t('promotions.shop_now')}
                       </Button>
                     </Link>
                   )}
                 </div>
-                <div className="md:w-1/2">
+                <div className="md:w-1/2 w-full">
                   <img 
                     src={banner.imageUrl} 
                     alt={banner.title}
-                    className="w-full h-36 object-cover rounded"
+                    className="w-full h-28 sm:h-32 md:h-36 object-cover rounded"
                     loading="lazy"
                   />
                 </div>

@@ -136,9 +136,19 @@ const HeroSlider: React.FC = () => {
                     {slide.description}
                   </p>
                   <Link href={slide.buttonLink}>
-                    <Button className="bg-[#FFC700] hover:bg-[#FFD700] text-gray-900 py-1.5 px-3 xs:py-2 xs:px-4 sm:py-2.5 sm:px-6 md:py-3 md:px-8 rounded-md font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 text-xs xs:text-sm sm:text-base border-2 border-yellow-600 hover:border-yellow-700">
-                      {slide.buttonText}
-                    </Button>
+                    <div className="inline-flex items-center gap-2 group cursor-pointer">
+                      <span className="text-white font-extrabold text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl uppercase tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:drop-shadow-[0_4px_12px_rgba(255,255,255,0.6)] transition-all duration-300 group-hover:scale-110 bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent animate-pulse">
+                        {slide.buttonText}
+                      </span>
+                      <svg 
+                        className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:translate-x-2 transition-transform duration-300" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
                   </Link>
                 </div>
               </div>

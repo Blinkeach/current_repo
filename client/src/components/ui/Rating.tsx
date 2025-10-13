@@ -1,6 +1,44 @@
 import React from 'react';
-import { Star, StarHalf } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Custom Star SVG component with proper border support
+const StarIcon = ({ fill, stroke, strokeWidth, className }: { fill: string; stroke: string; strokeWidth: number; className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke={stroke}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    style={{ paintOrder: 'stroke fill' }}
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+// Custom Half Star SVG component with proper border support
+const StarHalfIcon = ({ fill, stroke, strokeWidth, className }: { fill: string; stroke: string; strokeWidth: number; className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    stroke={stroke}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    style={{ paintOrder: 'stroke fill' }}
+  >
+    <defs>
+      <linearGradient id="half-fill">
+        <stop offset="50%" stopColor={fill} />
+        <stop offset="50%" stopColor="none" />
+      </linearGradient>
+    </defs>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="url(#half-fill)" />
+  </svg>
+);
 
 interface RatingProps {
   value: number;
@@ -49,22 +87,23 @@ export function Rating({
     }
   };
 
-  // Color configurations with proper fill and stroke for green stars
+  // Color configurations with proper fill and stroke for stars with borders
+  // All stars (filled, half, empty) use the SAME border color for consistency
   const colorConfig = {
     amber: {
-      filled: 'text-amber-500 fill-amber-500',
-      empty: 'text-amber-400/50 fill-transparent',
-      text: 'text-amber-600'
+      fillColor: '#ff6b35', // Orange fill (matching your image)
+      strokeColor: '#ff6b35', // Same orange border for ALL stars
+      text: 'text-orange-600'
     },
     green: {
-      filled: 'text-green-500 fill-green-500',
-      empty: 'text-green-500 fill-transparent',
+      fillColor: '#4ade80', // green-400
+      strokeColor: '#4ade80', // Same green border for ALL stars
       text: 'text-green-600'
     },
     accent: {
-      filled: 'text-accent fill-accent',
-      empty: 'text-accent/30 fill-transparent',
-      text: 'text-accent'
+      fillColor: '#c084fc', // purple-400
+      strokeColor: '#c084fc', // Same purple border for ALL stars
+      text: 'text-purple-600'
     }
   };
 
@@ -73,38 +112,41 @@ export function Rating({
 
   const stars = [];
 
-  // Full stars
+  // Full stars - filled with visible borders
   for (let i = 0; i < fullStars; i++) {
     stars.push(
-      <Star
+      <StarIcon
         key={`full-${i}`}
-        className={cn(currentSize.star, currentColor.filled)}
-        aria-hidden="true"
-        focusable="false"
+        fill={currentColor.fillColor}
+        stroke={currentColor.strokeColor}
+        strokeWidth={2.5}
+        className={currentSize.star}
       />
     );
   }
 
-  // Half star
+  // Half star - filled with visible borders
   if (hasHalfStar) {
     stars.push(
-      <StarHalf
+      <StarHalfIcon
         key="half"
-        className={cn(currentSize.star, currentColor.filled)}
-        aria-hidden="true"
-        focusable="false"
+        fill={currentColor.fillColor}
+        stroke={currentColor.strokeColor}
+        strokeWidth={2.5}
+        className={currentSize.star}
       />
     );
   }
 
-  // Empty stars
+  // Empty stars - outline only with SAME border color as filled stars
   for (let i = 0; i < emptyStars; i++) {
     stars.push(
-      <Star
+      <StarIcon
         key={`empty-${i}`}
-        className={cn(currentSize.star, currentColor.empty)}
-        aria-hidden="true"
-        focusable="false"
+        fill="none"
+        stroke={currentColor.strokeColor}
+        strokeWidth={2.5}
+        className={currentSize.star}
       />
     );
   }
